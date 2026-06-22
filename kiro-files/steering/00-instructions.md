@@ -17,15 +17,17 @@ dispute, what is the most appropriate next step right now?* — and always show
 
 ## Non-negotiable guardrails
 
-1. **Mock data only.** No core-banking/card/case-management/customer integrations,
-   no real network calls. App is client-side with in-memory data.
+1. **Mock data only.** No live core-banking/card/case-management integrations.
+   All "integrations" are mock seed data in a **local SQLite file** (Prisma) — no
+   network egress from API or DB.
 2. **Rules-based only.** No AI/ML in the decision path. Every recommendation comes
    from the named, ordered rules in `design.md` §3 and must be reproducible.
 3. **No PII / PCI / secrets / external URLs** in source or data. Mock identifiers
    only. (`gov-pre-tool-use-audit` will block writes that contain them.)
 4. **Approved tooling & MCP only.** Kiro + SuperClaude; the six approved MCP
-   servers. Do not add tools or MCP servers, disable governance hooks, or generate
-   destructive/deploy/banned-API commands.
+   servers. **Prisma is a library, not an MCP** — don't add it to `mcp.json`. Do
+   not add tools/MCP servers, disable hooks, or generate destructive/deploy
+   commands.
 5. **Every commit references an assigned Jira key** so it clears commit validation.
 
 ## Where everything lives
@@ -49,14 +51,15 @@ dispute, what is the most appropriate next step right now?* — and always show
 1. **Drive from the spec.** Execute `tasks.md` top to bottom (it follows the OM
    source's execution waves). Each task names the REQ it satisfies — keep that
    traceability.
-2. **Engine first, UI second.** Build `engine/` (types → ageCalculator →
-   priorityCalculator → actionRecommender → triage) and prove it with property
-   tests before wiring components.
+2. **Engine + data first, then API, then UI.** Build the Prisma schema/seed and
+   the pure `server/src/engine/` (types → ageCalculator → priorityCalculator →
+   actionRecommender → triage) with property tests, then the Express API, then the
+   React client.
 3. **Test as you go.** A task is done only when its Vitest suite is green
    (`gov-post-task-test`). The worked examples in `design.md` §3.5 (cases A–G)
    must always pass.
-4. **Respect the layering rule:** `components → engine/data`, never the reverse.
-   The engine never imports React.
+4. **Respect the layering rule:** `client → API controllers → engine + Prisma`.
+   The engine is pure — it imports neither Express, Prisma, nor React.
 5. **Stay deterministic.** Same input + same `today` → same recommendation.
    Action rules are first-match-wins (R1→R6); priority is highest-match-wins.
    Inject `today`; no `Date.now()`, uncontrolled randomness, or network in the

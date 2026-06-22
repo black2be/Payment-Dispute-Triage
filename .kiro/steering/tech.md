@@ -4,37 +4,39 @@ inclusion: always
 
 # Tech — Payment Dispute Triage
 
-> **Stack decision (changeable):** chosen to match the governance hook set
-> (ESLint, Vitest, TypeScript strict) and a client-side, mock-only prototype.
-> If the team prefers plain HTML/JS, update this file first — steering is the
-> source of truth Kiro follows.
+> **Architecture:** 3-tier per `architecture.md` (Doc 1). React + Vite + Tailwind
+> client → Node/Express API → SQLite + Prisma store. The Rules Engine is a pure
+> TypeScript module called in-process by the API. Steering is the source of truth
+> Kiro follows — update this file first if the stack changes.
 
 ## Stack
 
 | Concern | Choice | Notes |
 | --- | --- | --- |
-| Language | **TypeScript** (strict) | `strict: true`, no implicit `any` |
+| Language | **TypeScript** (strict) | `strict: true`, no implicit `any` — client + server |
 | UI framework | **React 18** (function components + hooks) | No class components |
-| Build/dev | **Vite** | Fast dev server, static build output |
-| Styling | **Tailwind CSS** | Utility classes; fixed badge/chip palette per design §5.3 |
-| Tests | **Vitest** + Testing Library | Unit + integration tests |
-| Property tests | **fast-check** | 100+ iterations per property (Properties 1–7) |
+| Build/dev (client) | **Vite** | Fast dev server |
+| Styling | **Tailwind CSS** | Fixed action/priority/age palette per design §5.4 |
+| API | **Node.js + Express** (TypeScript) | REST/JSON; routes → controllers → triage |
+| ORM / DB | **Prisma + SQLite** | Local file DB; seed scripts; no network egress |
+| Rules engine | **Pure TS module** | In-process in the API; no Express/Prisma imports |
+| Tests | **Vitest** + Testing Library + **supertest** | Unit + API integration |
+| Property tests | **fast-check** | 100+ iterations per property (P1–P7) |
 | Lint/format | **ESLint** + Prettier | Enforced on save via hooks |
-| Styling | Tailwind **or** CSS Modules (TBD) | Fixed action/priority/age palette per design §5.5 |
-| State | React state only (`useState`/`useReducer`) | No global store needed at this size |
-| Backend | **None** | Client-side only; mock dataset bundled; engine is pure functions |
+| State | React state only (`useState`/`useReducer`) | No global store needed |
 
 ## Hard constraints
 
-- **No network/runtime data calls.** The "API" in `design.md` is implemented as
-  in-memory functions with identical shapes. No `fetch`/`axios` to real services.
-- **No new MCP servers** beyond the AI SDLC approved list (sequential-thinking,
-  serena, aws-mcp, atlassian-rovo-mcp, aws-docs, playwright). `gov-mcp-guard`
-  enforces this.
-- **Minimal dependencies.** Every dependency is scanned by `gov-cve-build-gate`
-  (malware blocks, CRITICAL/HIGH warn). Prefer the standard library and the stack
-  above; justify any addition in a PR.
-- **No browser storage** (`localStorage`/`sessionStorage`) — session-only memory.
+- **No live integrations.** All "integrations" (core banking, card processing)
+  are **mock seed data in SQLite**. The DB is a local file — no network egress.
+  No `fetch`/`axios` to real external services.
+- **Prisma is a library, NOT an MCP.** Do not add a Prisma MCP to `mcp.json`. The
+  approved MCP list is fixed (sequential-thinking, serena, aws-mcp,
+  atlassian-rovo-mcp, aws-docs, playwright); `gov-mcp-guard` blocks others.
+- **Minimal dependencies.** Every dep is scanned by `gov-cve-build-gate` (malware
+  blocks, CRITICAL/HIGH warn). Justify additions in a PR.
+- **No browser storage** (`localStorage`/`sessionStorage`) — persistence lives in
+  SQLite via the API.
 - **Node + package manager:** use the repo's lockfile; install only from the
   approved Nexus proxy, never ad-hoc `npx` of untrusted packages.
 

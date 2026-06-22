@@ -11,7 +11,10 @@ as design constraints, not just gates.
 ## Always-true constraints
 
 - **Mock-only.** No calls to core banking, card processing, case management, or
-  any external service. The app is fully client-side with in-memory data.
+  any external service. All "integrations" are **mock seed data in a local SQLite
+  file** (via Prisma) — no network egress from the API or DB.
+- **Prisma is a library, not an MCP.** Do not add a Prisma MCP server to
+  `mcp.json`; the approved list is fixed and `gov-mcp-guard` blocks additions.
 - **No AI/ML in the decision path.** Triage decisions come only from the named,
   ordered rules in `design.md` §3.
 - **No PII / PCI / secrets / external URLs** in source or data. `gov-pre-tool-use-audit`

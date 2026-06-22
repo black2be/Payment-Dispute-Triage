@@ -26,6 +26,14 @@ fast-check (property tests, 100+ iterations each).
   the documented priority + triggered rule + action.
 - **Purity:** same input + same `today` evaluated twice → deeply-equal output.
 
+## API integration tests (`tests/api/*.test.ts`, supertest)
+
+- `GET /api/transactions/:reference`: hit returns the record; miss returns 404.
+- `POST /api/disputes`: returns the correct recommendation for cases A–G, persists
+  the DisputeCase, and `GET /api/disputes/:id` returns it with `ruleEvaluations`.
+- Future transaction date → 400; missing mandatory field → 400 naming the field.
+- Use a throwaway SQLite test DB; reset between tests. No network.
+
 ## Component tests
 
 - DisputeForm: required-field + future-date + positive-amount validation;

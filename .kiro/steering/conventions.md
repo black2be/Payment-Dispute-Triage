@@ -28,13 +28,24 @@ inclusion: always
 - Adding a rule = add one array entry + one test. Never edit unrelated rules.
 - Inject `today` for age math — no `Date.now()` inside the engine.
 
+## API & layering patterns
+
+- 3-tier: `client → API controllers → engine + Prisma`. The **engine is pure** —
+  it imports neither Express nor Prisma; controllers own all I/O.
+- Controllers: `validate → triage → persist (Prisma) → respond`. Validation
+  errors return `400 { errors:[{field,message}] }`; never throw raw strings.
+- **Enums:** DB + API use the code form (`RESOLVE_IMMEDIATELY`); the UI maps to
+  labels via one `client/src/labels.ts`. Never hand-format a label inline.
+- SQLite is a local file; all "integrations" are seed data — no network egress.
+
 ## React patterns
 
 - Function components with hooks; props typed with explicit interfaces; no
   required prop without a default where sensible.
 - Colour is **always paired with a text label** (accessibility + clarity) — never
   convey priority/action by colour alone.
-- Presentational components take data via props; compute stays in `engine/`.
+- Components fetch via `client/src/api.ts`; triage compute stays server-side in
+  `engine/`.
 
 ## Testing expectations
 

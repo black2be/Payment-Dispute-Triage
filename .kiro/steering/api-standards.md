@@ -2,28 +2,33 @@
 inclusion: manual
 ---
 
-# Engine contracts (load with #api-standards)
+# API standards (load with #api-standards)
 
-There is no backend. These are the **pure engine/service function contracts**
-from `design.md` §4 — keep their shapes exact so the engine could later lift into
-a service unchanged.
+The API is **Node.js + Express**, REST/JSON, per `design.md` §4. The Rules Engine
+runs **in-process** inside controllers — no separate service, no network hop.
 
-## Function contracts (do not drift from design §4)
+## Endpoints (do not drift from design §4)
 
-- `lookupTransaction(ref) -> MockTransaction | null` _(REQ-06)_
-- `calculateAge(txnDate, today) -> number` (throws `FutureDateError`) _(REQ-02)_
-- `classifyAgeBand(days) -> 'Recent' | 'Moderate' | 'Aged'` _(REQ-02)_
-- `determinePriority(amount, category, ageBand) -> 'High' | 'Medium' | 'Low'` _(REQ-03)_
-- `recommend(input, ageBand, priority) -> { action, triggeredRuleId, ruleEvaluations }` _(REQ-04)_
-- `validate(partialInput) -> FieldError[]` _(REQ-01, REQ-02)_
-- `triage(input, today) -> TriageResult` — single UI entry point; idempotent for
-  identical inputs; callable with no display present (REQ-05.5).
+| Method + path | Purpose | REQ |
+| --- | --- | --- |
+| `GET /api/transactions/:reference` | Mock lookup → `200 MockTransaction` or `404` | REQ-06 |
+| `POST /api/disputes` | Validate → `triage()` → persist DisputeCase → `201 { caseId, ...TriageResult }` | REQ-01/04/05 |
+| `GET /api/disputes/:id` | Stored case incl. `ruleEvaluations` + reason | REQ-05/07 |
+| `GET /api/disputes` | List stored cases | REQ-05.5 |
+| `GET /api/health` | Liveness | — |
 
 ## Rules
 
-- Functions are **pure/compute-only** — no writes to any system of record, no
-  real network I/O.
-- `validate` returns `{ field, message }[]`; never throw raw strings to the UI.
-- Field names and enum values match the glossary **verbatim** so engine, data, UI
-  and tests align.
-- Amounts are ZAR numbers; never format currency in the engine — format in the UI.
+- **Controller flow:** `validate(input)` → if errors `400 { errors:[{field,message}] }`
+  → `triage(input, today)` → persist via Prisma → return result. Never throw raw
+  strings to the client.
+- **Future transaction date → `400`** (REQ-02.2). Missing mandatory field → `400`
+  naming the field (REQ-01.3).
+- **Enums on the wire use the code form** (`RESOLVE_IMMEDIATELY`, …); the client
+  maps to labels. Amounts are ZAR numbers — never format currency in the API.
+- The engine is **pure** — controllers own all I/O (Prisma, req/res). The engine
+  imports neither Express nor Prisma.
+- **No network egress.** SQLite is a local file; all "integrations" are seed data.
+- **Determinism:** `POST /api/disputes` with identical input + same `today`
+  yields the same recommendation.
+- Validate and sanitise all request input at the controller boundary.
