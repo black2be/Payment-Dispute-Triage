@@ -8,42 +8,63 @@ inclusion: always
 
 ```
 payment-triage/
+├── docs/
+│   ├── requirements.md      # EARS-format requirements (BA)
+│   ├── test-cases.md        # Acceptance criteria (Test Architect)
+│   ├── api-spec.md          # Endpoint specifications (API Designer)
+│   ├── ui-spec.md           # Screen specifications (UI/UX Designer)
+│   └── architecture.md      # System design + data model (Architect)
 ├── .kiro/
-│   ├── steering/            # product, tech, structure, conventions, governance, *-standards
+│   ├── steering/              # product, tech, structure, conventions, governance, *-standards
 │   ├── specs/payment-triage/  # requirements.md, design.md, tasks.md
-│   ├── hooks/               # *.kiro.hook automation
-│   └── skills/              # reusable instruction packages
-├── prisma/
-│   ├── schema.prisma        # Customer, Transaction, DisputeCase + enums (design §2.2)
-│   └── seed.ts              # 15–20 mock transactions + customers (no PII/PCI)
-├── server/                  # Node.js + Express (TypeScript)
-│   └── src/
-│       ├── engine/          # PURE TypeScript — no Express, no Prisma, no React
-│       │   ├── types.ts     # enums (code form) + DisputeInput, TriageResult, RuleEvaluation
-│       │   ├── constants.ts # HIGH_AMOUNT, LOW_AMOUNT, AGE_RECENT_MAX, AGE_MODERATE_MAX
-│       │   ├── ageCalculator.ts
-│       │   ├── priorityCalculator.ts
-│       │   ├── actionRecommender.ts  # rules R1…R6, first match wins
-│       │   ├── validation.ts
-│       │   └── triage.ts    # triage(input, today) -> TriageResult (orchestrator)
-│       ├── routes/          # Express routers (/api/disputes, /api/transactions)
-│       ├── controllers/     # validate → triage → Prisma persist
-│       ├── db.ts            # Prisma client + lookupTransaction
-│       └── app.ts           # Express app
-├── client/                  # React + Vite + Tailwind
-│   └── src/
-│       ├── components/
-│       │   ├── DisputeForm.tsx
-│       │   ├── DisputeSummary.tsx
-│       │   ├── RecommendationPanel.tsx
-│       │   └── App.tsx      # submit → POST /api/disputes → single screen
-│       ├── labels.ts        # enum code ↔ display label map (design §2.1)
-│       ├── api.ts           # fetch wrappers for the REST endpoints
-│       └── main.tsx
-└── tests/
-    ├── engine/*.test.ts     # age, priority, action (P1–P7), worked examples A–G
-    ├── api/*.test.ts        # supertest integration
-    └── components/*.test.tsx
+│   ├── hooks/                 # *.kiro.hook automation
+│   └── skills/                # reusable instruction packages
+├── server/                    # Node.js + Express (TypeScript)
+│   ├── prisma/
+│   │   ├── schema.prisma      # Customer, Transaction, DisputeCase + enums (design §2.2)
+│   │   └── seed.ts            # 15–20 mock transactions + customers (no PII/PCI)
+│   ├── src/
+│   │   ├── engine/            # PURE TypeScript — no Express, no Prisma, no React
+│   │   │   ├── types.ts       # enums (code form) + DisputeInput, TriageResult, RuleEvaluation
+│   │   │   ├── constants.ts   # HIGH_AMOUNT, LOW_AMOUNT, AGE_RECENT_MAX, AGE_MODERATE_MAX
+│   │   │   ├── ageCalculator.ts
+│   │   │   ├── priorityCalculator.ts
+│   │   │   ├── actionRecommender.ts  # rules R1…R6, first match wins
+│   │   │   ├── validation.ts
+│   │   │   └── triage.ts     # triage(input, today) -> TriageResult (orchestrator)
+│   │   ├── routes/            # Express routers (/api/disputes, /api/transactions)
+│   │   ├── controllers/       # validate → triage → Prisma persist
+│   │   ├── middleware/        # errorHandler
+│   │   ├── db.ts              # Prisma client + lookupTransaction
+│   │   └── index.ts           # Express app + server start
+│   ├── tests/
+│   │   ├── engine/*.test.ts   # age, priority, action (P1–P7), worked examples A–G
+│   │   └── api/*.test.ts      # supertest integration
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── vitest.config.ts
+├── client/                    # React + Vite + Tailwind
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── DisputeForm.tsx
+│   │   │   ├── DisputeSummary.tsx
+│   │   │   ├── RecommendationPanel.tsx
+│   │   │   └── App.tsx        # submit → POST /api/disputes → single screen
+│   │   ├── labels.ts          # enum code ↔ display label map (design §2.1)
+│   │   ├── api.ts             # fetch wrappers for the REST endpoints
+│   │   ├── main.tsx
+│   │   └── index.css
+│   ├── tests/
+│   │   └── *.test.tsx         # component tests
+│   ├── e2e/
+│   │   └── *.spec.ts          # Playwright E2E tests
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── vite.config.ts
+│   ├── vitest.config.ts
+│   ├── tailwind.config.js
+│   └── postcss.config.js
+└── kiro-files/                # reference copy of .kiro artefacts
 ```
 
 ## Layering rule (enforced by review)

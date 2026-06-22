@@ -30,9 +30,9 @@ Every commit references the assigned Jira key (clears `gov-pre-tool-use-audit`).
 
 ## Phase 2 — Data store (SQLite + Prisma)
 
-- [ ] 2.1 `prisma/schema.prisma`: Customer, Transaction, DisputeCase + enums
+- [ ] 2.1 `server/prisma/schema.prisma`: Customer, Transaction, DisputeCase + enums
       (design §2.2). `prisma migrate dev` to create the local SQLite DB. _(REQ-06)_
-- [ ] 2.2 `prisma/seed.ts`: 15–20 transactions across all payment types,
+- [ ] 2.2 `server/prisma/seed.ts`: 15–20 transactions across all payment types,
       statuses, and Recent/Moderate/Aged dates; linked customers. No PII/PCI. _(REQ-06)_
 - [ ] 2.3 `*` Property 7 — `lookupTransaction(ref)`: ref in seed → record; not in
       seed → null. _(REQ-06)_

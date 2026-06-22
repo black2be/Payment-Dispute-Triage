@@ -73,7 +73,7 @@ Spelling follows the OM glossary (American `Unauthorized`).
 > the api-spec's endpoint *additions* (customer/transaction listing, a decoupled
 > recommendation endpoint, lifecycle status) are borrowed, re-mapped above.
 
-### 2.2 Prisma schema (entities)
+### 2.2 Prisma schema (entities — `server/prisma/schema.prisma`)
 
 | Entity | Fields | Links |
 | --- | --- | --- |
