@@ -25,6 +25,11 @@ fast-check (property tests, 100+ iterations each).
 - **Worked examples:** table-driven over design §3.5 cases A–G; each reproduces
   the documented priority + triggered rule + action.
 - **Purity:** same input + same `today` evaluated twice → deeply-equal output.
+- **Boundary cases (TC-044…051):** age 7/8/30/31 days → Recent/Moderate/Moderate/
+  Aged; amount 999.99/1,000/10,000/10,000.01 → Low/Medium/Medium/High. Assert
+  these exact boundaries.
+- **Enum injection (TC-042/043):** `validate()` rejects an unsupported
+  `paymentType`/`issueCategory` with a field error; triage is never reached.
 
 ## API integration tests (`tests/api/*.test.ts`, supertest)
 

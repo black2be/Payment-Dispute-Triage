@@ -11,11 +11,20 @@ runs **in-process** inside controllers — no separate service, no network hop.
 
 | Method + path | Purpose | REQ |
 | --- | --- | --- |
-| `GET /api/transactions/:reference` | Mock lookup → `200 MockTransaction` or `404` | REQ-06 |
-| `POST /api/disputes` | Validate → `triage()` → persist DisputeCase → `201 { caseId, ...TriageResult }` | REQ-01/04/05 |
-| `GET /api/disputes/:id` | Stored case incl. `ruleEvaluations` + reason | REQ-05/07 |
-| `GET /api/disputes` | List stored cases | REQ-05.5 |
+| `GET /api/customers` · `/:id` | Mock customers (dropdowns) | REQ-01/06 |
+| `GET /api/transactions` · `/:reference` | List / lookup-to-pre-populate | REQ-01/06 |
+| `POST /api/disputes` | Validate → compute age/ageBand/priority → persist (`OPEN`) → `201` | REQ-01/02/03 |
+| `GET /api/disputes` · `/:id` | List (filters) / stored case | REQ-05.5/07 |
+| `GET /api/disputes/:id/recommendation` | Run the 6 OM rules (decoupled) → action + reason + `ruleEvaluations` + priority + ageBand | REQ-04/05 |
+| `PATCH /api/disputes/:id/status` *(extension)* | Lifecycle OPEN/IN_REVIEW/RESOLVED/CLOSED | beyond REQ |
 | `GET /api/health` | Liveness | — |
+
+**Canonical vocabulary is OM:** four actions (Resolve Immediately, Investigate
+Further, Escalate, Refer to Another Team), Transaction_Status `COMPLETED` (not
+`SETTLED`), dispute age from the **transaction date**. The uploaded api-spec's
+5 issue types / 7 actions / age-from-submission are **not** used — only its
+endpoint additions were borrowed. Recommendation is **decoupled** from creation
+(separate GET), satisfying REQ-05.5.
 
 ## Rules
 

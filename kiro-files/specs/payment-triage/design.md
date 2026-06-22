@@ -64,6 +64,14 @@ Spelling follows the OM glossary (American `Unauthorized`).
 | AgeBand | `RECENT` / `MODERATE` / `AGED` | Recent / Moderate / Aged |
 | Priority | `HIGH` / `MEDIUM` / `LOW` | High / Medium / Low |
 | RecommendedAction | `RESOLVE_IMMEDIATELY` / `INVESTIGATE_FURTHER` / `ESCALATE` / `REFER_TO_ANOTHER_TEAM` | Resolve Immediately / Investigate Further / Escalate / Refer to Another Team |
+| DisputeStatus *(lifecycle, extension)* | `OPEN` / `IN_REVIEW` / `RESOLVED` / `CLOSED` | Open / In Review / Resolved / Closed |
+
+> The OM glossary defines **exactly four** Recommended_Action values and **four**
+> Transaction_Status values (Completed, not SETTLED). The uploaded `api-spec`
+> proposes a different domain (5 issue types, 7 actions, age-from-submission,
+> unauthorised = LOW) — **not adopted**; OM requirements remain canonical. Only
+> the api-spec's endpoint *additions* (customer/transaction listing, a decoupled
+> recommendation endpoint, lifecycle status) are borrowed, re-mapped above.
 
 ### 2.2 Prisma schema (entities)
 
@@ -142,18 +150,44 @@ Medium otherwise
 
 ## 4. API specification (API Designer) — Node.js + Express, REST/JSON
 
+Base path `/api`; `Content-Type: application/json`; ISO-8601 timestamps; amounts
+in ZAR. Request/response enums use the **code form** (§2.1); the UI maps to
+labels. The Rules Engine runs **in-process** in the controller.
+
+### 4.1 Reference data (for form dropdowns + lookup)
+
 | Method + path | Purpose | REQ |
 | --- | --- | --- |
-| `GET /api/transactions/:reference` | Mock lookup to pre-populate the form → `200 MockTransaction` or `404` | REQ-06.1/06.2 |
-| `POST /api/disputes` | Validate → `triage()` → persist DisputeCase → `201 { caseId, ...TriageResult }` | REQ-01, REQ-04, REQ-05 |
-| `GET /api/disputes/:id` | Fetch a stored case incl. `ruleEvaluations` and reason | REQ-05, REQ-07 |
-| `GET /api/disputes` | List stored cases (for review/evidence) | REQ-05.5 |
+| `GET /api/customers` | List mock customers (dropdown/search) → `200 { customers, total }` | REQ-01 |
+| `GET /api/customers/:id` | Mock customer by id → `200` or `404` | REQ-06 |
+| `GET /api/transactions` | List mock transactions, optional `?customerId` → `200 { transactions, total }` | REQ-01, REQ-06 |
+| `GET /api/transactions/:reference` | Lookup by reference to **pre-populate** the form → `200` or `404` | REQ-06.1/06.2 |
+
+### 4.2 Disputes
+
+| Method + path | Purpose | REQ |
+| --- | --- | --- |
+| `POST /api/disputes` | Validate → compute `disputeAge` (from **transaction date**), `ageBand`, `priority` → persist DisputeCase (`status: OPEN`) → `201` | REQ-01, REQ-02, REQ-03 |
+| `GET /api/disputes` | List + optional filters `status` / `priority` / `paymentType`; sorted priority desc then oldest first → `200 { disputes, total }` | REQ-05.5 |
+| `GET /api/disputes/:id` | Stored case; `disputeAge` + `priority` recomputed at read → `200` or `404` | REQ-05, REQ-07 |
+| `GET /api/disputes/:id/recommendation` | Run the **6 OM rules** (decoupled) → `200 { disputeId, action, reason, triggeredRuleId, ruleEvaluations, priority, ageBand, generatedAt }` | REQ-04, REQ-05 |
+| `PATCH /api/disputes/:id/status` *(extension)* | Update lifecycle status (OPEN/IN_REVIEW/RESOLVED/CLOSED) → `200` or `400`/`404` | beyond REQ-01–07 |
 | `GET /api/health` | Liveness | — |
 
+**Decoupling (REQ-05.5):** creation persists the dispute and its priority/age;
+the **recommendation is a separate endpoint**, so the engine produces and the API
+can log a recommendation independently of any display. The client renders summary
++ recommendation on one screen by calling `POST` then
+`GET /:id/recommendation` (REQ-07). The action vocabulary stays the **four OM
+actions** — the api-spec's 7-action set is not used.
+
 Conventions: validation errors return `400 { errors: [{ field, message }] }`
-(never raw strings). Future transaction date → `400` (REQ-02.2). Request/response
-enums use the **code form**; the UI maps to labels. `POST /api/disputes` is the
-single triage entry point; the Rules Engine runs in-process inside the controller.
+(never raw strings). `validate()` checks mandatory fields, positive amount,
+non-future date, **and enum membership** — an unsupported `paymentType` or
+`issueCategory` (injected past the dropdown) → `400` and never reaches triage
+(REQ-01.6, TC-042/043). Future transaction date → `400` (REQ-02.2). Missing
+customer or transaction in mock data → `404`. `PATCH …/status` is a lifecycle
+convenience beyond the OM requirements and is not on the REQ-01–07 critical path.
 
 ---
 

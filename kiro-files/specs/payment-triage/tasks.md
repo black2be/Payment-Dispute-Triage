@@ -57,15 +57,20 @@ Every commit references the assigned Jira key (clears `gov-pre-tool-use-audit`).
 
 ## Phase 5 — Validation + API (Node/Express)
 
-- [ ] 5.1 `engine/validation.ts` — mandatory fields, future date, positive amount
-      → field-level errors. _(REQ-01, REQ-02)_
+- [ ] 5.1 `engine/validation.ts` — mandatory fields, future date, positive amount,
+      **enum membership** (reject injected unsupported Payment_Type/Issue_Category,
+      TC-042/043) → field-level errors. _(REQ-01, REQ-02)_
 - [ ] 5.2 `*` P6 validation completeness. _(REQ-01)_
-- [ ] 5.3 Express app + routes/controllers: `GET /api/transactions/:reference`,
-      `POST /api/disputes` (validate → triage → persist via Prisma → 201),
-      `GET /api/disputes/:id`, `GET /api/disputes`, `GET /api/health`. _(REQ-04, REQ-05, REQ-06)_
-- [ ] 5.4 `*` API integration tests (supertest): lookup hit/miss; create dispute
-      returns correct recommendation + persists; future date → 400; missing field
-      → 400. _(REQ-01, REQ-04, REQ-06)_
+- [ ] 5.3 Express app + routes/controllers (design §4): reference data
+      (`GET /api/customers`·`/:id`, `GET /api/transactions`·`/:reference`);
+      disputes (`POST /api/disputes` validate→age/priority→persist OPEN;
+      `GET /api/disputes` + filters; `GET /api/disputes/:id`;
+      `GET /api/disputes/:id/recommendation` runs the 6 OM rules, decoupled;
+      `PATCH /api/disputes/:id/status` lifecycle extension); `GET /api/health`. _(REQ-01, REQ-04, REQ-05, REQ-06)_
+- [ ] 5.4 `*` API integration tests (supertest): customer/transaction lookup
+      hit/miss; create persists with correct priority/age; recommendation endpoint
+      returns the correct action for cases A–G; future date → 400; missing field
+      → 400; status PATCH transitions. _(REQ-01, REQ-04, REQ-06)_
 
 ## Phase 6 — UI (React + Vite + Tailwind)
 
@@ -79,8 +84,8 @@ Every commit references the assigned Jira key (clears `gov-pre-tool-use-audit`).
 
 ## Phase 7 — Integration
 
-- [ ] 7.1 `App.tsx` — submit → `POST /api/disputes` → summary + recommendation on
-      one screen (no navigation). _(REQ-04, REQ-07)_
+- [ ] 7.1 `App.tsx` — submit → `POST /api/disputes` → `GET /:id/recommendation`
+      → render summary + recommendation on one screen (no navigation). _(REQ-04, REQ-07)_
 - [ ] 7.2 `*` End-to-end: submit a dispute, verify recommendation + single-screen
       summary; verify case persisted. _(REQ-04, REQ-07)_
 

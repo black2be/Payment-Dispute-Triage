@@ -63,6 +63,10 @@ a next action.
    Transfer.
 5. THE Dispute_Form SHALL restrict Issue_Category to Duplicate Debit, Failed
    Transfer, Missing Payment, or Unauthorized Transaction.
+6. IF an unsupported Payment_Type or Issue_Category value is supplied (e.g.
+   injected via the API, bypassing the dropdown), THEN the system SHALL reject it
+   at the validation boundary and SHALL NOT proceed to triage. *(Covers TC-042,
+   TC-043.)*
 
 ---
 
