@@ -1,0 +1,13 @@
+{
+  "name": "Lint on save",
+  "description": "Run ESLint on the saved file and surface fixes inline.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["src/**/*.ts", "src/**/*.tsx"]
+  },
+  "then": {
+    "type": "agentExecution",
+    "prompt": "Run ESLint on #file. Report any errors or warnings and apply safe auto-fixes (formatting, import order, unused vars). Do not change program behaviour. If a lint rule conflicts with .kiro/steering/conventions.md, follow conventions.md and note the conflict."
+  }
+}
