@@ -18,27 +18,31 @@ interface Props {
 export default function DisputeForm({ onSubmit, prefill }: Props) {
   const [form, setForm] = useState({
     transactionId: '',
+    customerName: '',
     paymentType: '' as PaymentType | '',
     issueCategory: '' as IssueCategory | '',
     transactionStatus: '' as TransactionStatus | '',
     amount: '',
     disputeDate: '',
+    description: '',
   });
 
   useEffect(() => {
     if (prefill) {
       setForm({
         transactionId: prefill.transactionId,
+        customerName: '',
         paymentType: prefill.paymentType,
         issueCategory: prefill.issueCategory,
         transactionStatus: prefill.transactionStatus,
         amount: String(prefill.amount),
         disputeDate: prefill.disputeDate,
+        description: '',
       });
     }
   }, [prefill]);
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
@@ -62,7 +66,11 @@ export default function DisputeForm({ onSubmit, prefill }: Props) {
       <h2 className="mb-4 text-lg font-semibold">Dispute Details</h2>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="transactionId" className={labelClass}>Transaction ID</label>
+          <label htmlFor="customerName" className={labelClass}>Customer Name</label>
+          <input id="customerName" name="customerName" value={form.customerName} onChange={handleChange} className={inputClass} placeholder="e.g. Customer Alpha" />
+        </div>
+        <div>
+          <label htmlFor="transactionId" className={labelClass}>Transaction Reference</label>
           <input id="transactionId" name="transactionId" value={form.transactionId} onChange={handleChange} className={inputClass} />
         </div>
         <div>
@@ -91,8 +99,12 @@ export default function DisputeForm({ onSubmit, prefill }: Props) {
           <input id="amount" name="amount" type="number" min="0" step="0.01" value={form.amount} onChange={handleChange} className={inputClass} />
         </div>
         <div>
-          <label htmlFor="disputeDate" className={labelClass}>Dispute Date</label>
+          <label htmlFor="disputeDate" className={labelClass}>Transaction Date</label>
           <input id="disputeDate" name="disputeDate" type="date" value={form.disputeDate} onChange={handleChange} className={inputClass} />
+        </div>
+        <div>
+          <label htmlFor="description" className={labelClass}>Description (optional)</label>
+          <textarea id="description" name="description" value={form.description} onChange={handleChange} className={inputClass} rows={2} placeholder="Additional details…" />
         </div>
       </div>
       <button type="submit" className="mt-6 rounded bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
