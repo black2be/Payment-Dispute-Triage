@@ -33,6 +33,8 @@ display labels. No PII/PCI — identifiers are mock tokens only.
 
 ## Key Decisions
 
+- Base the repo on **`thandog/node-conf-starter`** — npm-workspaces monorepo (`server/` + `client/`), Node 22, TS/ESM, Vite proxy `/api/*` → :3001, Playwright e2e; replace the starter's sample endpoints
+- Prisma schema in **`server/prisma/`**; SQLite DB file + generated client are git-ignored; tests live per workspace (`server/tests/`, `client/tests/`, `client/e2e/`)
 - SQLite via Prisma — zero infrastructure, runs locally; a PostgreSQL move is a connection-string change
 - Rules engine as an in-process TypeScript module — no network hop, pure and deterministic, trivial to unit-test
 - First-match-wins rule evaluation — deterministic single output (REQ-04); priority is top-down highest-match-wins (REQ-03)

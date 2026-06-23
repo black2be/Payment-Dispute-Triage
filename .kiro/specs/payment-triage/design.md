@@ -10,22 +10,26 @@ UI/UX Designer (components + flows)
 
 ---
 
-## 1. Architecture (3-tier)
+## 1. Architecture (3-tier, on `node-conf-starter`)
+
+npm-workspaces monorepo: `client/` (Vite, port 5173) + `server/` (Express, port
+3001); Vite proxies `/api/*` to the server. Prisma schema lives in
+`server/prisma/`.
 
 ```
-┌──────────────── Dispute Capture UI (React + Vite + Tailwind) ─────────────────┐
+┌──────── client/ — Dispute Capture UI (React + Vite + Tailwind, :5173) ─────────┐
 │   DisputeForm   │   DisputeSummary   │   RecommendationPanel   │   App         │
 └───────────────────────────────┬───────────────────────────────────────────────┘
-                                │ REST / JSON (fetch)
+                                │ REST / JSON (fetch; Vite proxies /api/* → :3001)
                                 ▼
-┌──────────────────────── API Layer (Node.js + Express) ────────────────────────┐
-│  routes → controllers → validation → triage()                                  │
-│  Rules Engine (pure TypeScript, in-process — no network hop)                    │
+┌──────── server/ — API Layer (Node.js + Express, TS/ESM, :3001) ───────────────┐
+│  routes → middleware → validation → triage()                                   │
+│  Rules Engine (server/src/engine, pure TypeScript, in-process — no network hop) │
 └───────────────────────────────┬───────────────────────────────────────────────┘
                                 │ Prisma Client
                                 ▼
-┌──────────────────────── Mock Data Store (SQLite via Prisma) ──────────────────┐
-│   Customer   │   Transaction   │   DisputeCase   (seeded via script)           │
+┌──────── server/prisma/ — Mock Data Store (SQLite via Prisma) ─────────────────┐
+│   Customer   │   Transaction   │   DisputeCase   (seeded via seed.ts)          │
 └────────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -152,7 +156,8 @@ Medium otherwise
 
 Base path `/api`; `Content-Type: application/json`; ISO-8601 timestamps; amounts
 in ZAR. Request/response enums use the **code form** (§2.1); the UI maps to
-labels. The Rules Engine runs **in-process** in the controller.
+labels. The Rules Engine runs **in-process** in the route handler (with
+error-handling middleware), per the `node-conf-starter` `server/` layout.
 
 ### 4.1 Reference data (for form dropdowns + lookup)
 
@@ -252,5 +257,5 @@ with a text label.
 | No PII/PCI | §2.2 mock tokens only |
 | Rules-based, inspectable | §3 named rules + persisted `ruleEvaluations` |
 | Approved MCP only | §1 note — Prisma is a library, **no Prisma MCP** |
-| CVE/malware gate | deps: React, Vite, Tailwind, Express, Prisma, Vitest, fast-check — keep minimal, scan on build |
+| CVE/malware gate | deps from the starter: React, Vite, Tailwind, Express, Prisma, Vitest, Playwright + added fast-check, supertest — keep minimal, scan on build |
 | Explainability/audit | §3.4 examples + persisted reasoning per case |

@@ -2,12 +2,14 @@
 
 **Feature:** `payment-triage`
 **Requirements:** Confluence *Use Case 1* (OM), REQ-01–07.
-**Architecture:** 3-tier — React + Vite + Tailwind UI · Node/Express API · SQLite
-+ Prisma (per `architecture.md`, Doc 1).
+**Architecture:** 3-tier on the **`node-conf-starter`** monorepo — React + Vite +
+Tailwind `client/` · Node/Express (ESM) `server/` · SQLite + Prisma in
+`server/prisma/`.
 **Owner role:** Facilitator (sequencing); tasks assigned per role.
-**Approach:** Build **engine + data first**, then API, then UI, then integration.
-The Rules Engine stays pure TS, called in-process by the API. Tests marked `*`
-are property-based (fast-check) or unit/integration tests.
+**Approach:** Clone the starter, then build **engine + data first**, then API,
+then UI, then integration. The Rules Engine stays pure TS, called in-process by
+the API. Tests marked `*` are property-based (fast-check), unit, integration, or
+Playwright e2e.
 
 Every commit references the assigned Jira key (clears `gov-pre-tool-use-audit`).
 
@@ -20,24 +22,29 @@ Every commit references the assigned Jira key (clears `gov-pre-tool-use-audit`).
 - [ ] 0.3 Confirm **no Prisma MCP** is added to `mcp.json` — Prisma is a library
       only (`gov-mcp-guard`). _(governance)_
 
-## Phase 1 — Workspace & types
+## Phase 1 — Base the repo on the starter
 
-- [ ] 1.1 Scaffold monorepo: `client/` (React+Vite+Tailwind), `server/`
-      (Express+TS), shared `server/src/engine/`. Install Vitest, fast-check,
-      @testing-library/react, Prisma, Express. _(REQ-06)_
-- [ ] 1.2 Define domain types + the **enum code↔label map** (`engine/types.ts`,
-      `client/src/labels.ts`) per design §2.1. _(REQ-01)_
+- [ ] 1.1 Use **`thandog/node-conf-starter`** as the base (clone/"Use this
+      template"); keep `.kiro/` + `kiro-files/` at the root. `nvm use` (Node 22),
+      `npm install` at root (workspaces set up `server/` + `client/`). _(setup)_
+- [ ] 1.2 Remove the starter's sample endpoints (`/api/info`, `/api/echo`); keep
+      `/health`, `/api/health`. Confirm `npm run dev` runs both apps (client 5173,
+      server 3001, Vite proxies `/api/*`). _(setup)_
+- [ ] 1.3 Add deps: `fast-check`, `supertest` (server, dev). Playwright already in
+      the starter. Define domain types + the **enum code↔label map**
+      (`server/src/engine/types.ts`, `client/src/labels.ts`) per design §2.1. _(REQ-01)_
 
-## Phase 2 — Data store (SQLite + Prisma)
+## Phase 2 — Data store (SQLite + Prisma in `server/prisma/`)
 
-- [ ] 2.1 `prisma/schema.prisma`: Customer, Transaction, DisputeCase + enums
-      (design §2.2). `prisma migrate dev` to create the local SQLite DB. _(REQ-06)_
-- [ ] 2.2 `prisma/seed.ts`: 15–20 transactions across all payment types,
+- [ ] 2.1 `server/prisma/schema.prisma`: Customer, Transaction, DisputeCase +
+      enums (design §2.2). `npm run db:generate && npm run db:migrate
+      --workspace=server` to create the local SQLite DB. _(REQ-06)_
+- [ ] 2.2 `server/prisma/seed.ts`: 15–20 transactions across all payment types,
       statuses, and Recent/Moderate/Aged dates; linked customers. No PII/PCI. _(REQ-06)_
 - [ ] 2.3 `*` Property 7 — `lookupTransaction(ref)`: ref in seed → record; not in
       seed → null. _(REQ-06)_
 
-## Phase 3 — Rules Engine (pure TS)
+## Phase 3 — Rules Engine (pure TS, `server/src/engine/`)
 
 - [ ] 3.1 `engine/ageCalculator.ts` — `calculateAge` (throw on future) +
       `classifyAgeBand` (0–7 / 8–30 / >30). _(REQ-02)_
@@ -49,7 +56,7 @@ Every commit references the assigned Jira key (clears `gov-pre-tool-use-audit`).
       returns action + triggeredRuleId + ruleEvaluations + reason. _(REQ-04, REQ-05)_
 - [ ] 3.6 `*` P4 determinism, `*` P5 precedence. _(REQ-04)_
 - [ ] 3.7 `engine/triage.ts` orchestrator; assert worked examples A–G (design
-      §3.4) table-driven. _(REQ-03, REQ-04)_
+      §3.4) table-driven. Engine tests live in `server/tests/`. _(REQ-03, REQ-04)_
 
 ## Phase 4 — Engine checkpoint
 
@@ -61,37 +68,40 @@ Every commit references the assigned Jira key (clears `gov-pre-tool-use-audit`).
       **enum membership** (reject injected unsupported Payment_Type/Issue_Category,
       TC-042/043) → field-level errors. _(REQ-01, REQ-02)_
 - [ ] 5.2 `*` P6 validation completeness. _(REQ-01)_
-- [ ] 5.3 Express app + routes/controllers (design §4): reference data
+- [ ] 5.3 Express `routes/` + `middleware/` (design §4): reference data
       (`GET /api/customers`·`/:id`, `GET /api/transactions`·`/:reference`);
       disputes (`POST /api/disputes` validate→age/priority→persist OPEN;
       `GET /api/disputes` + filters; `GET /api/disputes/:id`;
       `GET /api/disputes/:id/recommendation` runs the 6 OM rules, decoupled;
-      `PATCH /api/disputes/:id/status` lifecycle extension); `GET /api/health`. _(REQ-01, REQ-04, REQ-05, REQ-06)_
-- [ ] 5.4 `*` API integration tests (supertest): customer/transaction lookup
-      hit/miss; create persists with correct priority/age; recommendation endpoint
-      returns the correct action for cases A–G; future date → 400; missing field
-      → 400; status PATCH transitions. _(REQ-01, REQ-04, REQ-06)_
+      `PATCH /api/disputes/:id/status` lifecycle extension); keep starter `/health`,
+      `/api/health`. Error-handling middleware returns `400 {errors[]}`. _(REQ-01, REQ-04, REQ-05, REQ-06)_
+- [ ] 5.4 `*` API integration tests (supertest, `server/tests/`): customer/
+      transaction lookup hit/miss; create persists with correct priority/age;
+      recommendation endpoint returns the correct action for cases A–G; future date
+      → 400; missing/invalid-enum field → 400; status PATCH transitions. _(REQ-01, REQ-04, REQ-06)_
 
-## Phase 6 — UI (React + Vite + Tailwind)
+## Phase 6 — UI (React + Vite + Tailwind, `client/`)
 
 - [ ] 6.1 `DisputeForm.tsx` — fields + dropdowns (label map), reference lookup
       pre-populates status, manual status on miss, inline validation. _(REQ-01, REQ-06)_
 - [ ] 6.2 `DisputeSummary.tsx` — all attributes incl. age band + priority. _(REQ-07)_
 - [ ] 6.3 `RecommendationPanel.tsx` — action label, rule-evaluation list with
       triggered rule highlighted, priority + age badges, plain-language reason. _(REQ-05)_
-- [ ] 6.4 `*` Component tests: fields render, dropdown options correct,
-      recommendation shows required info. _(REQ-01, REQ-05, REQ-07)_
+- [ ] 6.4 `*` Component tests (Vitest + Testing Library, `client/tests/`): fields
+      render, dropdown options correct, recommendation shows required info. _(REQ-01, REQ-05, REQ-07)_
 
 ## Phase 7 — Integration
 
 - [ ] 7.1 `App.tsx` — submit → `POST /api/disputes` → `GET /:id/recommendation`
       → render summary + recommendation on one screen (no navigation). _(REQ-04, REQ-07)_
-- [ ] 7.2 `*` End-to-end: submit a dispute, verify recommendation + single-screen
-      summary; verify case persisted. _(REQ-04, REQ-07)_
+- [ ] 7.2 `*` Playwright e2e (`client/e2e/`): submit a dispute, verify the
+      recommendation + single-screen summary; verify the case persisted via the
+      API. `npm run test:e2e`. _(REQ-04, REQ-07)_
 
 ## Phase 8 — Final checkpoint + governance + demo
 
-- [ ] 8.1 All tests green; client + server run. _(verification)_
+- [ ] 8.1 `npm test` (both workspaces) + `npm run test:e2e` green; `npm run dev`
+      runs client + server. _(verification)_
 - [ ] 8.2 `gov-cve-build-gate` clean (scan React/Express/Prisma/etc.); review CVEs. _(governance)_
 - [ ] 8.3 Grep source/seed for PII, card numbers, secrets, external URLs — none. _(governance)_
 - [ ] 8.4 `gov-pre-commit-review`; `ai-sdlc check --report`. _(governance)_

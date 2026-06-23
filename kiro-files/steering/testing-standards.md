@@ -5,10 +5,12 @@ fileMatchPattern: "**/*.test.{ts,tsx}"
 
 # Testing standards
 
-Loaded automatically when a test file is open. Vitest + Testing Library +
-fast-check (property tests, 100+ iterations each).
+Loaded automatically when a test file is open. Per the `node-conf-starter`
+layout: Vitest unit/component tests in `server/tests/` and `client/tests/`;
+Playwright e2e in `client/e2e/`. fast-check for property tests (100+ iterations).
+Run `npm test` (both workspaces) and `npm run test:e2e`.
 
-## Engine property tests (`tests/engine/*.test.ts`)
+## Engine property tests (`server/tests/*.test.ts`)
 
 - **P1 age calculation** — for any past/present date, age = calendar days and the
   band (Recent 0–7 / Moderate 8–30 / Aged > 30) is correct. _(REQ-02)_
@@ -31,15 +33,16 @@ fast-check (property tests, 100+ iterations each).
 - **Enum injection (TC-042/043):** `validate()` rejects an unsupported
   `paymentType`/`issueCategory` with a field error; triage is never reached.
 
-## API integration tests (`tests/api/*.test.ts`, supertest)
+## API integration tests (`server/tests/*.test.ts`, supertest)
 
 - `GET /api/transactions/:reference`: hit returns the record; miss returns 404.
-- `POST /api/disputes`: returns the correct recommendation for cases A–G, persists
-  the DisputeCase, and `GET /api/disputes/:id` returns it with `ruleEvaluations`.
-- Future transaction date → 400; missing mandatory field → 400 naming the field.
+- `POST /api/disputes`: persists the case with correct priority/age; the
+  recommendation endpoint returns the correct action for cases A–G, and
+  `GET /api/disputes/:id` returns the stored case with `ruleEvaluations`.
+- Future transaction date → 400; missing/invalid-enum field → 400 naming the field.
 - Use a throwaway SQLite test DB; reset between tests. No network.
 
-## Component tests
+## Component tests (`client/tests/*.test.tsx`, Vitest + Testing Library)
 
 - DisputeForm: required-field + future-date + positive-amount validation;
   dropdowns have the correct options; mock pre-populates Transaction_Status, and
@@ -47,6 +50,12 @@ fast-check (property tests, 100+ iterations each).
 - RecommendationPanel: action label, priority + age badges, plain-language
   reason, and the full rule-evaluation list with the triggered rule highlighted.
 - DisputeSummary + App: summary and recommendation render on one screen.
+
+## End-to-end (`client/e2e/*.spec.ts`, Playwright)
+
+- Submit a dispute through the UI → verify the recommended action, reasoning, and
+  single-screen summary; confirm the case persisted via the API. Playwright starts
+  the client dev server automatically; run `npm run test:e2e`.
 
 ## Conventions
 

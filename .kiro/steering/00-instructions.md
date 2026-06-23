@@ -58,8 +58,9 @@ dispute, what is the most appropriate next step right now?* — and always show
 3. **Test as you go.** A task is done only when its Vitest suite is green
    (`gov-post-task-test`). The worked examples in `design.md` §3.5 (cases A–G)
    must always pass.
-4. **Respect the layering rule:** `client → API controllers → engine + Prisma`.
-   The engine is pure — it imports neither Express, Prisma, nor React.
+4. **Respect the layering rule:** `client → server routes/middleware → engine +
+   Prisma` (on the `node-conf-starter` monorepo). The engine
+   (`server/src/engine/`) is pure — it imports neither Express, Prisma, nor React.
 5. **Stay deterministic.** Same input + same `today` → same recommendation.
    Action rules are first-match-wins (R1→R6); priority is highest-match-wins.
    Inject `today`; no `Date.now()`, uncontrolled randomness, or network in the

@@ -30,10 +30,11 @@ inclusion: always
 
 ## API & layering patterns
 
-- 3-tier: `client → API controllers → engine + Prisma`. The **engine is pure** —
-  it imports neither Express nor Prisma; controllers own all I/O.
-- Controllers: `validate → triage → persist (Prisma) → respond`. Validation
-  errors return `400 { errors:[{field,message}] }`; never throw raw strings.
+- 3-tier on `node-conf-starter`: `client → server routes/middleware → engine +
+  Prisma`. The **engine is pure** — it imports neither Express nor Prisma;
+  route handlers own all I/O.
+- Route handler: `validate → triage → persist (Prisma) → respond`; error-handling
+  middleware returns `400 { errors:[{field,message}] }`; never throw raw strings.
 - **Enums:** DB + API use the code form (`RESOLVE_IMMEDIATELY`); the UI maps to
   labels via one `client/src/labels.ts`. Never hand-format a label inline.
 - SQLite is a local file; all "integrations" are seed data — no network egress.

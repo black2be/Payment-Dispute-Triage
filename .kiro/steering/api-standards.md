@@ -4,8 +4,12 @@ inclusion: manual
 
 # API standards (load with #api-standards)
 
-The API is **Node.js + Express**, REST/JSON, per `design.md` §4. The Rules Engine
-runs **in-process** inside controllers — no separate service, no network hop.
+The API is **Node.js + Express** (TypeScript, **ESM/NodeNext**), REST/JSON, per
+`design.md` §4, in the `node-conf-starter` `server/` workspace. Code lives in
+`server/src/routes/` + `server/src/middleware/`; the Rules Engine
+(`server/src/engine/`) runs **in-process** — no separate service, no network hop.
+The server listens on **port 3001**; the Vite dev client proxies `/api/*` to it.
+Keep the starter's `/health` and `/api/health` liveness endpoints.
 
 ## Endpoints (do not drift from design §4)
 
@@ -28,15 +32,15 @@ endpoint additions were borrowed. Recommendation is **decoupled** from creation
 
 ## Rules
 
-- **Controller flow:** `validate(input)` → if errors `400 { errors:[{field,message}] }`
-  → `triage(input, today)` → persist via Prisma → return result. Never throw raw
-  strings to the client.
+- **Route handler flow:** `validate(input)` → if errors `400 { errors:[{field,message}] }`
+  → `triage(input, today)` → persist via Prisma → return result. Error-handling
+  **middleware** formats failures; never throw raw strings to the client.
 - **Future transaction date → `400`** (REQ-02.2). Missing mandatory field → `400`
   naming the field (REQ-01.3).
 - **Enums on the wire use the code form** (`RESOLVE_IMMEDIATELY`, …); the client
   maps to labels. Amounts are ZAR numbers — never format currency in the API.
-- The engine is **pure** — controllers own all I/O (Prisma, req/res). The engine
-  imports neither Express nor Prisma.
+- The engine is **pure** — routes/middleware own all I/O (Prisma, req/res). The
+  engine imports neither Express nor Prisma.
 - **No network egress.** SQLite is a local file; all "integrations" are seed data.
 - **Determinism:** `POST /api/disputes` with identical input + same `today`
   yields the same recommendation.
