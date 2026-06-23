@@ -10,6 +10,51 @@ test.describe('Payment Dispute Triage — E2E', () => {
     await expect(page.getByRole('button', { name: 'Triage Dispute' })).toBeVisible();
   });
 
+  test('TC-001: all required fields are enterable', async ({ page }) => {
+    // Customer name
+    await page.locator('#customerName').fill('Test Customer');
+    await expect(page.locator('#customerName')).toHaveValue('Test Customer');
+    // Transaction reference
+    await page.locator('#transactionId').fill('REF-123');
+    await expect(page.locator('#transactionId')).toHaveValue('REF-123');
+    // Transaction date
+    await page.locator('#disputeDate').fill('2026-06-01');
+    await expect(page.locator('#disputeDate')).toHaveValue('2026-06-01');
+    // Amount
+    await page.locator('#amount').fill('1500');
+    await expect(page.locator('#amount')).toHaveValue('1500');
+    // Payment Type
+    await page.locator('#paymentType').selectOption('Card Payment');
+    await expect(page.locator('#paymentType')).toHaveValue('Card Payment');
+    // Issue Category
+    await page.locator('#issueCategory').selectOption('Duplicate Debit');
+    await expect(page.locator('#issueCategory')).toHaveValue('Duplicate Debit');
+    // Transaction Status
+    await page.locator('#transactionStatus').selectOption('Completed');
+    await expect(page.locator('#transactionStatus')).toHaveValue('Completed');
+    // Description (optional)
+    await page.locator('#description').fill('Test dispute description');
+    await expect(page.locator('#description')).toHaveValue('Test dispute description');
+  });
+
+  test('TC-002: valid form submits successfully and shows triage result', async ({ page }) => {
+    await page.locator('#customerName').fill('Valid Customer');
+    await page.locator('#transactionId').fill('REF-VALID');
+    await page.locator('#paymentType').selectOption('Card Payment');
+    await page.locator('#issueCategory').selectOption('Duplicate Debit');
+    await page.locator('#transactionStatus').selectOption('Completed');
+    await page.locator('#amount').fill('600');
+    await page.locator('#disputeDate').fill('2026-06-20');
+
+    await page.getByRole('button', { name: 'Triage Dispute' }).click();
+
+    // No validation errors
+    await expect(page.getByRole('alert')).not.toBeVisible();
+    // Triage result appears
+    await expect(page.getByText('Triage Result')).toBeVisible();
+    await expect(page.getByText('Rule Evaluations')).toBeVisible();
+  });
+
   test('TC-003: shows customer name required on empty submit', async ({ page }) => {
     await page.getByRole('button', { name: 'Triage Dispute' }).click();
     await expect(page.getByRole('alert')).toBeVisible();
