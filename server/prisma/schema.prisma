@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id            String         @id @default(cuid())
+  name          String
+  accountNumber String
+  transactions  Transaction[]
+  disputes      DisputeCase[]
+}
+
+model Transaction {
+  id              String          @id @default(cuid())
+  customerId      String
+  reference       String          @unique
+  paymentType     String          // CARD_PAYMENT | EFT | INTERNAL_TRANSFER
+  amount          Float
+  currency        String          @default("ZAR")
+  status          String          // COMPLETED | PENDING | FAILED | REVERSED
+  transactionDate DateTime
+  customer        Customer        @relation(fields: [customerId], references: [id])
+  disputes        DisputeCase[]
+}
+
+model DisputeCase {
+  id                String   @id @default(cuid())
+  customerId        String
+  transactionId     String
+  paymentType       String
+  issueCategory     String
+  amount            Float
+  description       String?
+  reportedAt        DateTime @default(now())
+  ageDays           Int
+  ageBand           String
+  priority          String
+  recommendedAction String
+  triggeredRuleId   String
+  ruleEvaluations   String   // JSON stored as text
+  status            String   @default("OPEN")
+  customer          Customer    @relation(fields: [customerId], references: [id])
+  transaction       Transaction @relation(fields: [transactionId], references: [id])
+}
