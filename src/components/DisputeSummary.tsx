@@ -23,9 +23,10 @@ const ageBandColors: Record<string, string> = {
 interface Props {
   result: TriageResult;
   formData: FormSubmitData;
+  onAction: (action: string) => void;
 }
 
-export default function DisputeSummary({ result, formData }: Props) {
+export default function DisputeSummary({ result, formData, onAction }: Props) {
   return (
     <div className="rounded-lg border border-sb-gray-200 bg-white shadow-sm overflow-hidden">
       {/* Action banner */}
@@ -71,6 +72,37 @@ export default function DisputeSummary({ result, formData }: Props) {
             <dt className="text-sb-gray-500">Priority Level</dt>
             <dd className="text-sb-gray-900">{result.priority}</dd>
           </dl>
+        </div>
+
+        {/* Action buttons */}
+        <div className="border-t border-sb-gray-200 pt-4">
+          <p className="text-sm font-medium text-sb-gray-500 mb-3">Take action on this dispute:</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => onAction('Resolved')}
+              className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              Resolve
+            </button>
+            <button
+              onClick={() => onAction('In Review')}
+              className="rounded-md bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-400"
+            >
+              Investigate
+            </button>
+            <button
+              onClick={() => onAction('In Review')}
+              className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+            >
+              Escalate
+            </button>
+            <button
+              onClick={() => onAction('Open')}
+              className="rounded-md border border-sb-gray-200 bg-white px-4 py-2 text-sm font-medium text-sb-gray-700 hover:bg-sb-gray-50 focus:outline-none focus:ring-2 focus:ring-sb-blue"
+            >
+              Refer to Another Team
+            </button>
+          </div>
         </div>
       </div>
     </div>
