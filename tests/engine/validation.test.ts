@@ -50,7 +50,8 @@ describe('P6: validation completeness', () => {
   });
 
   it('a valid complete input returns no errors', () => {
-    const input: DisputeInput = {
+    const input: DisputeInput & { customerName: string } = {
+      customerName: 'Test Customer',
       transactionId: 'TXN-001',
       paymentType: 'EFT',
       issueCategory: 'Duplicate Debit',
