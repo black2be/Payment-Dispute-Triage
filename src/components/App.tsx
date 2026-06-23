@@ -5,7 +5,6 @@ import { triage } from '../engine/triage';
 import { mockTransactions, lookupTransaction } from '../data/mockTransactions';
 import DisputeForm from './DisputeForm';
 import DisputeSummary from './DisputeSummary';
-import RecommendationPanel from './RecommendationPanel';
 
 export interface FormSubmitData extends DisputeInput {
   customerName: string;
@@ -114,9 +113,6 @@ export default function App() {
           {result && formData ? (
             <>
               <DisputeSummary result={result} formData={formData} />
-              <div className="mt-6">
-                <RecommendationPanel result={result} />
-              </div>
               <div className="mt-6 text-center">
                 <button
                   type="button"
