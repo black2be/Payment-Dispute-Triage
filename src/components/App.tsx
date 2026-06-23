@@ -63,9 +63,7 @@ export default function App() {
       <header className="bg-sb-blue shadow-md">
         <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-sb-gold rounded-sm flex items-center justify-center">
-              <span className="text-white font-bold text-sm">SB</span>
-            </div>
+            <img src="/sb-logo.jpeg" alt="Standard Bank" className="h-10 w-10 rounded-sm object-contain" />
             <div>
               <h1 className="text-lg font-bold text-white leading-tight">Payment Dispute Triage</h1>
               <p className="text-xs text-blue-200">Digital Platforms — Operations Tool</p>
