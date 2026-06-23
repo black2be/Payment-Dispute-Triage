@@ -1,0 +1,25 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: 52.19.75.103
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /opt/payment-triage || mkdir -p /opt/payment-triage
+            cd /opt/payment-triage
+            git pull origin main 2>/dev/null || git clone https://github.com/black2be/Payment-Dispute-Triage.git .
+            docker compose down
+            docker compose up -d --build

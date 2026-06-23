@@ -1,0 +1,19 @@
+# Keep build contexts small and free of host artefacts
+**/node_modules
+**/dist
+**/build
+.git
+.github
+.kiro
+kiro-files
+docs
+**/coverage
+**/playwright-report
+**/test-results
+*.db
+*.db-journal
+*.log
+.DS_Store
+**/.DS_Store
+.env
+**/.env

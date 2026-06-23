@@ -1,0 +1,185 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Least-privilege by default
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ──────────────────────────────────────────────────────────────
+  # Build, lint, type-check, unit/integration tests, Playwright e2e
+  # ──────────────────────────────────────────────────────────────
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node (from .nvmrc)
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install (workspaces, from lockfile)
+        run: npm ci
+
+      - name: Generate Prisma client + migrate (local SQLite)
+        if: ${{ hashFiles('server/prisma/schema.prisma') != '' }}
+        env:
+          DATABASE_URL: file:./ci.db
+        run: |
+          npm run db:generate --workspace=server
+          npm run db:migrate:deploy --workspace=server || npm run db:migrate --workspace=server
+
+      - name: Lint (ESLint)
+        run: npm run lint
+
+      - name: Format check (Prettier)
+        run: npm run format:check
+
+      - name: Build (type-check + bundle both apps)
+        run: npm run build
+
+      - name: Unit & integration tests (Vitest, both workspaces)
+        run: npm test
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: End-to-end tests (Playwright)
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: client/playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────────────
+  # Governance gate: dependency CVE / malware scan (mirrors gov-cve-build-gate)
+  #   - malware (OSV MAL-*) BLOCKS the build
+  #   - CRITICAL/HIGH CVEs are surfaced (warn), do not block
+  # ──────────────────────────────────────────────────────────────
+  dependency-scan:
+    name: Dependency CVE/Malware (OSV)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install OSV-Scanner
+        run: |
+          curl -sSfL \
+            https://github.com/google/osv-scanner/releases/latest/download/osv-scanner_linux_amd64 \
+            -o /usr/local/bin/osv-scanner
+          chmod +x /usr/local/bin/osv-scanner
+
+      - name: Scan dependencies
+        run: |
+          # Full scan as JSON for parsing; table form for the log
+          osv-scanner scan source -r ./ --format json > osv-results.json || true
+          echo "----- OSV summary -----"
+          osv-scanner scan source -r ./ || true
+
+      - name: Block on malware (OSV MAL-* / malicious-packages)
+        run: |
+          if grep -Eq '"id":[[:space:]]*"MAL-' osv-results.json; then
+            echo "::error::Malicious package detected (OSV MAL-*). Build blocked."
+            exit 1
+          fi
+          echo "No malicious packages detected."
+
+      - name: Upload OSV report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: osv-results
+          path: osv-results.json
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────────────
+  # Governance gate: secrets + PII / card-number scan (mock-only rule)
+  # ──────────────────────────────────────────────────────────────
+  secrets-pii:
+    name: Secrets & PII
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: PII / card-number / account-number scan
+        run: |
+          # Flag any 13–19 digit run (PAN/account-shaped) in source, seed, or docs.
+          # Mock tokens like MOCK-AC-001 do not match.
+          if grep -rEn '[0-9]{13,19}' \
+                server client docs \
+                --include='*.ts' --include='*.tsx' --include='*.js' \
+                --include='*.json' --include='*.md' 2>/dev/null \
+             | grep -vE 'lock|package-lock'; then
+            echo "::error::Possible card/account number (13–19 digits) found — keep data mock-only."
+            exit 1
+          fi
+          echo "No card/account-number-shaped values found."
+
+  # ──────────────────────────────────────────────────────────────
+  # Compliance evidence (ISO 42001 / NIST AI RMF / PCI DSS / POPIA)
+  # ──────────────────────────────────────────────────────────────
+  compliance-evidence:
+    name: Compliance Evidence
+    runs-on: ubuntu-latest
+    needs: [build-test, dependency-scan, secrets-pii]
+    if: ${{ always() }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate evidence JSON
+        run: |
+          cat > compliance-evidence.json <<EOF
+          {
+            "feature": "payment-triage",
+            "repository": "${{ github.repository }}",
+            "commit": "${{ github.sha }}",
+            "ref": "${{ github.ref_name }}",
+            "runId": "${{ github.run_id }}",
+            "generatedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "gates": {
+              "lint": "${{ needs.build-test.result }}",
+              "build": "${{ needs.build-test.result }}",
+              "tests": "${{ needs.build-test.result }}",
+              "dependencyScan": "${{ needs.dependency-scan.result }}",
+              "secretsAndPii": "${{ needs.secrets-pii.result }}"
+            },
+            "controls": {
+              "ISO_IEC_42001_2023": "AI management system — rules-based, inspectable decision path",
+              "NIST_AI_RMF_1_0": "Govern/Map/Measure/Manage — CI gates + traceable specs",
+              "PCI_DSS_v4_0": "No PCI data — secrets/PII scan enforced",
+              "POPIA": "No PII; mock-only data; data sovereignty (af-south-1)"
+            }
+          }
+          EOF
+          cat compliance-evidence.json
+
+      - name: Upload compliance evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: compliance-evidence
+          path: compliance-evidence.json
+          retention-days: 30
