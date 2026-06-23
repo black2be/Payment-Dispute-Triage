@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { DisputeInput, PaymentType, IssueCategory, TransactionStatus } from '../engine/types';
 
 const paymentTypes: PaymentType[] = ['Card Payment', 'EFT', 'Internal Transfer'];
@@ -12,9 +12,10 @@ const statuses: TransactionStatus[] = ['Completed', 'Pending', 'Failed', 'Revers
 
 interface Props {
   onSubmit: (input: DisputeInput) => void;
+  prefill?: DisputeInput | null;
 }
 
-export default function DisputeForm({ onSubmit }: Props) {
+export default function DisputeForm({ onSubmit, prefill }: Props) {
   const [form, setForm] = useState({
     transactionId: '',
     paymentType: '' as PaymentType | '',
@@ -23,6 +24,19 @@ export default function DisputeForm({ onSubmit }: Props) {
     amount: '',
     disputeDate: '',
   });
+
+  useEffect(() => {
+    if (prefill) {
+      setForm({
+        transactionId: prefill.transactionId,
+        paymentType: prefill.paymentType,
+        issueCategory: prefill.issueCategory,
+        transactionStatus: prefill.transactionStatus,
+        amount: String(prefill.amount),
+        disputeDate: prefill.disputeDate,
+      });
+    }
+  }, [prefill]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     setForm({ ...form, [e.target.name]: e.target.value });
