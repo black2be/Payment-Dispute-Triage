@@ -3,6 +3,7 @@ import type { DisputeInput, TriageResult } from '../engine/types';
 import { validate } from '../engine/validation';
 import { triage } from '../engine/triage';
 import { mockTransactions, lookupTransaction } from '../data/mockTransactions';
+import { generateMockCases } from '../data/mockCases';
 import DisputeForm from './DisputeForm';
 import DisputeSummary from './DisputeSummary';
 import CasesList from './CasesList';
@@ -21,7 +22,7 @@ export default function App() {
   const [errors, setErrors] = useState<string[]>([]);
   const [prefill, setPrefill] = useState<DisputeInput | null>(null);
   const [resetKey, setResetKey] = useState(0);
-  const [cases, setCases] = useState<CaseRecord[]>([]);
+  const [cases, setCases] = useState<CaseRecord[]>(() => generateMockCases());
   const [actionTaken, setActionTaken] = useState<string | null>(null);
 
   function handleSubmit(input: FormSubmitData) {
