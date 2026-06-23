@@ -58,8 +58,8 @@ test.describe('Payment Dispute Triage — E2E', () => {
   test('TC-003: shows customer name required on empty submit', async ({ page }) => {
     await page.getByRole('button', { name: 'Triage Dispute' }).click();
     await expect(page.getByRole('alert')).toBeVisible();
-    await expect(page.getByText('Customer name is required')).toBeVisible();
-    await expect(page.getByText('Transaction ID is required')).toBeVisible();
+    await expect(page.getByRole('alert').getByText('Customer name is required')).toBeVisible();
+    await expect(page.getByRole('alert').getByText('Transaction ID is required')).toBeVisible();
   });
 
   test('selecting mock transaction fills the form', async ({ page }) => {

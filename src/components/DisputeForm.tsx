@@ -23,9 +23,10 @@ const statusCodeToLabel: Record<string, TransactionStatus> = {
 interface Props {
   onSubmit: (input: FormSubmitData) => void;
   prefill?: DisputeInput | null;
+  fieldErrors?: string[];
 }
 
-export default function DisputeForm({ onSubmit, prefill }: Props) {
+export default function DisputeForm({ onSubmit, prefill, fieldErrors = [] }: Props) {
   const [form, setForm] = useState({
     transactionId: '',
     customerName: '',
@@ -126,14 +127,29 @@ export default function DisputeForm({ onSubmit, prefill }: Props) {
 
   const labelClass = 'block text-sm font-medium text-gray-700';
   const inputClass = 'mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500';
+  const errorInputClass = 'mt-1 block w-full rounded border-red-500 shadow-sm focus:border-red-500 focus:ring-red-500';
+
+  function hasError(field: string) {
+    return fieldErrors.some((e) => e.toLowerCase().includes(field.toLowerCase()));
+  }
 
   return (
     <form onSubmit={handleSubmit} className="rounded bg-white p-6 shadow">
-      <h2 className="mb-4 text-lg font-semibold">Dispute Details</h2>
+      <h2 className="mb-4 text-lg font-semibold">Capture dispute</h2>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="customerName" className={labelClass}>Customer Name</label>
-          <input id="customerName" name="customerName" value={form.customerName} onChange={handleChange} className={inputClass} placeholder="e.g. Customer Alpha" />
+          <input
+            id="customerName"
+            name="customerName"
+            value={form.customerName}
+            onChange={handleChange}
+            className={hasError('customer') ? errorInputClass : inputClass}
+            placeholder="e.g. Customer Alpha"
+            aria-invalid={hasError('customer')}
+            aria-describedby={hasError('customer') ? 'customerName-error' : undefined}
+          />
+          {hasError('customer') && <p id="customerName-error" className="mt-1 text-xs text-red-600">Customer name is required.</p>}
         </div>
         <div>
           <label htmlFor="transactionId" className={labelClass}>Transaction Reference</label>
@@ -143,9 +159,12 @@ export default function DisputeForm({ onSubmit, prefill }: Props) {
             value={form.transactionId}
             onChange={handleChange}
             onBlur={handleReferenceLookup}
-            className={inputClass}
+            className={hasError('transaction id') ? errorInputClass : inputClass}
             placeholder="e.g. TXN-001"
+            aria-invalid={hasError('transaction id')}
+            aria-describedby={hasError('transaction id') ? 'transactionId-error' : undefined}
           />
+          {hasError('transaction id') && <p id="transactionId-error" className="mt-1 text-xs text-red-600">Transaction ID is required.</p>}
           {lookupStatus === 'found' && (
             <p className="mt-1 text-xs text-green-600">Transaction found — status pre-populated.</p>
           )}
@@ -155,14 +174,14 @@ export default function DisputeForm({ onSubmit, prefill }: Props) {
         </div>
         <div>
           <label htmlFor="paymentType" className={labelClass}>Payment Type</label>
-          <select id="paymentType" name="paymentType" value={form.paymentType} onChange={handleChange} className={inputClass}>
+          <select id="paymentType" name="paymentType" value={form.paymentType} onChange={handleChange} className={hasError('payment type') ? errorInputClass : inputClass} aria-invalid={hasError('payment type')}>
             <option value="">Select…</option>
             {paymentTypes.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
         <div>
           <label htmlFor="issueCategory" className={labelClass}>Issue Category</label>
-          <select id="issueCategory" name="issueCategory" value={form.issueCategory} onChange={handleChange} className={inputClass}>
+          <select id="issueCategory" name="issueCategory" value={form.issueCategory} onChange={handleChange} className={hasError('issue category') ? errorInputClass : inputClass} aria-invalid={hasError('issue category')}>
             <option value="">Select…</option>
             {issueCategories.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
@@ -172,18 +191,18 @@ export default function DisputeForm({ onSubmit, prefill }: Props) {
             Transaction Status
             {statusFromLookup && <span className="ml-2 text-xs text-green-600">(from lookup)</span>}
           </label>
-          <select id="transactionStatus" name="transactionStatus" value={form.transactionStatus} onChange={handleChange} className={inputClass}>
+          <select id="transactionStatus" name="transactionStatus" value={form.transactionStatus} onChange={handleChange} className={hasError('transaction status') ? errorInputClass : inputClass} aria-invalid={hasError('transaction status')}>
             <option value="">Select…</option>
             {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
         <div>
           <label htmlFor="amount" className={labelClass}>Amount (R)</label>
-          <input id="amount" name="amount" type="number" min="0" step="0.01" value={form.amount} onChange={handleChange} className={inputClass} />
+          <input id="amount" name="amount" type="number" min="0" step="0.01" value={form.amount} onChange={handleChange} className={hasError('amount') ? errorInputClass : inputClass} aria-invalid={hasError('amount')} />
         </div>
         <div>
           <label htmlFor="disputeDate" className={labelClass}>Transaction Date</label>
-          <input id="disputeDate" name="disputeDate" type="date" value={form.disputeDate} onChange={handleChange} className={inputClass} />
+          <input id="disputeDate" name="disputeDate" type="date" value={form.disputeDate} onChange={handleChange} className={hasError('date') ? errorInputClass : inputClass} aria-invalid={hasError('date')} />
         </div>
         <div>
           <label htmlFor="description" className={labelClass}>Description (optional)</label>

@@ -16,6 +16,7 @@ export default function App() {
   const [formData, setFormData] = useState<FormSubmitData | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [prefill, setPrefill] = useState<DisputeInput | null>(null);
+  const [resetKey, setResetKey] = useState(0);
 
   function handleSubmit(input: FormSubmitData) {
     const validationErrors = validate(input);
@@ -43,8 +44,17 @@ export default function App() {
         disputeDate: txn.disputeDate,
       });
       setResult(null);
+      setFormData(null);
       setErrors([]);
     }
+  }
+
+  function handleReset() {
+    setResult(null);
+    setFormData(null);
+    setErrors([]);
+    setPrefill(null);
+    setResetKey((k) => k + 1);
   }
 
   return (
@@ -86,14 +96,32 @@ export default function App() {
           </div>
         )}
 
-        <DisputeForm onSubmit={handleSubmit} prefill={prefill} />
+        <DisputeForm key={resetKey} onSubmit={handleSubmit} prefill={prefill} fieldErrors={errors} />
 
-        {result && formData && (
-          <>
-            <DisputeSummary result={result} formData={formData} />
-            <RecommendationPanel result={result} />
-          </>
-        )}
+        {/* Result panel with aria-live for screen readers */}
+        <div aria-live="polite" aria-atomic="true">
+          {result && formData ? (
+            <>
+              <DisputeSummary result={result} formData={formData} />
+              <div className="mt-6">
+                <RecommendationPanel result={result} />
+              </div>
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  New dispute
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="rounded bg-white p-6 shadow text-center text-gray-500">
+              Capture a dispute to see the recommended next step.
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
