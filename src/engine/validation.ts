@@ -26,6 +26,11 @@ export function validate(input: Partial<DisputeInput>): ValidationError[] {
   }
   if (!input.disputeDate) {
     errors.push({ field: 'disputeDate', message: 'Dispute date is required.' });
+  } else {
+    const today = new Date().toISOString().split('T')[0]!;
+    if (input.disputeDate > today) {
+      errors.push({ field: 'disputeDate', message: 'Transaction date cannot be a future date.' });
+    }
   }
 
   return errors;

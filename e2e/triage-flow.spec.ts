@@ -67,4 +67,20 @@ test.describe('Payment Dispute Triage — E2E', () => {
 
     await expect(page.getByText('Refer to Another Team', { exact: true })).toBeVisible();
   });
+
+  test('TC-012: rejects future transaction date with error message', async ({ page }) => {
+    await page.locator('#transactionId').fill('TXN-FUTURE');
+    await page.locator('#paymentType').selectOption('Card Payment');
+    await page.locator('#issueCategory').selectOption('Duplicate Debit');
+    await page.locator('#transactionStatus').selectOption('Completed');
+    await page.locator('#amount').fill('500');
+    await page.locator('#disputeDate').fill('2030-01-01');
+
+    await page.getByRole('button', { name: 'Triage Dispute' }).click();
+
+    await expect(page.getByRole('alert')).toBeVisible();
+    await expect(page.getByText('Transaction date cannot be a future date')).toBeVisible();
+    // Triage result should NOT appear
+    await expect(page.getByText('Triage Result')).not.toBeVisible();
+  });
 });
