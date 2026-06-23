@@ -19,8 +19,13 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /opt/payment-triage || mkdir -p /opt/payment-triage
+            sudo mkdir -p /opt/payment-triage
+            sudo chown ubuntu:ubuntu /opt/payment-triage
             cd /opt/payment-triage
-            git pull origin main 2>/dev/null || git clone https://github.com/black2be/Payment-Dispute-Triage.git .
-            docker compose down
+            if [ -d .git ]; then
+              git pull origin main
+            else
+              git clone https://github.com/black2be/Payment-Dispute-Triage.git .
+            fi
+            docker compose down || true
             docker compose up -d --build
