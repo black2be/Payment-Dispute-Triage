@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Prisma / SQLite (local DB + generated client)
+*.db
+*.db-journal
+server/prisma/dev.db*
+
+# Env / secrets
+.env
+**/.env
+!**/.env.example
+
+# Logs
+*.log
+
+# Test / coverage
+coverage/
+playwright-report/
+test-results/
