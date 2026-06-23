@@ -6,9 +6,12 @@ export interface ValidationError {
 }
 
 /** Validate dispute input fields. Returns empty array if valid. */
-export function validate(input: Partial<DisputeInput>): ValidationError[] {
+export function validate(input: Partial<DisputeInput> & { customerName?: string }): ValidationError[] {
   const errors: ValidationError[] = [];
 
+  if (!input.customerName?.trim()) {
+    errors.push({ field: 'customerName', message: 'Customer name is required.' });
+  }
   if (!input.transactionId?.trim()) {
     errors.push({ field: 'transactionId', message: 'Transaction ID is required.' });
   }

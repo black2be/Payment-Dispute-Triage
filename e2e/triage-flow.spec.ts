@@ -10,9 +10,10 @@ test.describe('Payment Dispute Triage — E2E', () => {
     await expect(page.getByRole('button', { name: 'Triage Dispute' })).toBeVisible();
   });
 
-  test('shows validation errors on empty submit', async ({ page }) => {
+  test('TC-003: shows customer name required on empty submit', async ({ page }) => {
     await page.getByRole('button', { name: 'Triage Dispute' }).click();
     await expect(page.getByRole('alert')).toBeVisible();
+    await expect(page.getByText('Customer name is required')).toBeVisible();
     await expect(page.getByText('Transaction ID is required')).toBeVisible();
   });
 
@@ -24,15 +25,17 @@ test.describe('Payment Dispute Triage — E2E', () => {
 
   test('triaging an unauthorized transaction shows Escalate', async ({ page }) => {
     await page.getByLabel('Load from mock data').selectOption('TXN-001');
+    await page.locator('#customerName').fill('Customer Alpha');
     await page.getByRole('button', { name: 'Triage Dispute' }).click();
 
     await expect(page.getByText('Escalate', { exact: true })).toBeVisible();
     await expect(page.getByText('Priority: High')).toBeVisible();
-    await expect(page.getByText('R3-UNAUTH').first()).toBeVisible();
+    await expect(page.getByText('R3-UNAUTH-HIGHVAL').first()).toBeVisible();
   });
 
   test('triaging a low-value duplicate shows Investigate Further', async ({ page }) => {
     await page.getByLabel('Load from mock data').selectOption('TXN-003');
+    await page.locator('#customerName').fill('Customer Gamma');
     await page.getByRole('button', { name: 'Triage Dispute' }).click();
 
     await expect(page.getByText('Investigate Further', { exact: true })).toBeVisible();
@@ -41,6 +44,7 @@ test.describe('Payment Dispute Triage — E2E', () => {
 
   test('triaging a recent failed transaction shows Resolve Immediately', async ({ page }) => {
     await page.getByLabel('Load from mock data').selectOption('TXN-002');
+    await page.locator('#customerName').fill('Customer Beta');
     await page.getByRole('button', { name: 'Triage Dispute' }).click();
 
     await expect(page.getByText('Resolve Immediately', { exact: true })).toBeVisible();
@@ -49,13 +53,29 @@ test.describe('Payment Dispute Triage — E2E', () => {
 
   test('rule evaluations panel shows all rules', async ({ page }) => {
     await page.getByLabel('Load from mock data').selectOption('TXN-004');
+    await page.locator('#customerName').fill('Customer Delta');
     await page.getByRole('button', { name: 'Triage Dispute' }).click();
 
     await expect(page.getByText('Rule Evaluations')).toBeVisible();
     await expect(page.getByText('R6-DEFAULT').first()).toBeVisible();
   });
 
+  test('TC-040: dispute summary shows all required fields', async ({ page }) => {
+    await page.getByLabel('Load from mock data').selectOption('TXN-002');
+    await page.locator('#customerName').fill('Summary Customer');
+    await page.getByRole('button', { name: 'Triage Dispute' }).click();
+
+    await expect(page.getByText('Dispute Summary')).toBeVisible();
+    await expect(page.getByText('Summary Customer')).toBeVisible();
+    // Verify key fields are in the summary (use role definitions to avoid dropdown conflicts)
+    const summary = page.locator('dl');
+    await expect(summary.getByText('TXN-002')).toBeVisible();
+    await expect(summary.getByText('EFT')).toBeVisible();
+    await expect(summary.getByText('Failed Transfer')).toBeVisible();
+  });
+
   test('manual form entry works end-to-end', async ({ page }) => {
+    await page.locator('#customerName').fill('Manual Customer');
     await page.locator('#transactionId').fill('TXN-MANUAL');
     await page.locator('#paymentType').selectOption('Internal Transfer');
     await page.locator('#issueCategory').selectOption('Failed Transfer');
@@ -69,19 +89,16 @@ test.describe('Payment Dispute Triage — E2E', () => {
   });
 
   test('TC-036: pre-populate transaction status for valid reference', async ({ page }) => {
-    // Type a valid mock reference and blur the field
     await page.locator('#transactionId').fill('TXN-001');
     await page.locator('#transactionId').blur();
 
-    // Wait for the lookup feedback
     await expect(page.getByText('Transaction found')).toBeVisible();
-    // Status should be pre-populated (TXN-001 is Completed in mock data)
     await expect(page.locator('#transactionStatus')).toHaveValue('Completed');
-    // Should show "(from lookup)" indicator
     await expect(page.getByText('(from lookup)')).toBeVisible();
   });
 
   test('TC-012: rejects future transaction date with error message', async ({ page }) => {
+    await page.locator('#customerName').fill('Future Customer');
     await page.locator('#transactionId').fill('TXN-FUTURE');
     await page.locator('#paymentType').selectOption('Card Payment');
     await page.locator('#issueCategory').selectOption('Duplicate Debit');
@@ -93,7 +110,6 @@ test.describe('Payment Dispute Triage — E2E', () => {
 
     await expect(page.getByRole('alert')).toBeVisible();
     await expect(page.getByText('Transaction date cannot be a future date')).toBeVisible();
-    // Triage result should NOT appear
     await expect(page.getByText('Triage Result')).not.toBeVisible();
   });
 });

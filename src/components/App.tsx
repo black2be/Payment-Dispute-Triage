@@ -7,21 +7,28 @@ import DisputeForm from './DisputeForm';
 import DisputeSummary from './DisputeSummary';
 import RecommendationPanel from './RecommendationPanel';
 
+export interface FormSubmitData extends DisputeInput {
+  customerName: string;
+}
+
 export default function App() {
   const [result, setResult] = useState<TriageResult | null>(null);
+  const [formData, setFormData] = useState<FormSubmitData | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [prefill, setPrefill] = useState<DisputeInput | null>(null);
 
-  function handleSubmit(input: DisputeInput) {
+  function handleSubmit(input: FormSubmitData) {
     const validationErrors = validate(input);
     if (validationErrors.length > 0) {
       setErrors(validationErrors.map((e) => e.message));
       setResult(null);
+      setFormData(null);
       return;
     }
     setErrors([]);
     const today = new Date().toISOString().split('T')[0]!;
     setResult(triage(input, today));
+    setFormData(input);
   }
 
   function handleSelectTransaction(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -81,9 +88,9 @@ export default function App() {
 
         <DisputeForm onSubmit={handleSubmit} prefill={prefill} />
 
-        {result && (
+        {result && formData && (
           <>
-            <DisputeSummary result={result} />
+            <DisputeSummary result={result} formData={formData} />
             <RecommendationPanel result={result} />
           </>
         )}

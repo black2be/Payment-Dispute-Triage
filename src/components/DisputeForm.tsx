@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { DisputeInput, PaymentType, IssueCategory, TransactionStatus } from '../engine/types';
 import { lookupTransaction } from '../data/mockTransactions';
+import type { FormSubmitData } from './App';
 
 const paymentTypes: PaymentType[] = ['Card Payment', 'EFT', 'Internal Transfer'];
 const issueCategories: IssueCategory[] = [
@@ -20,7 +21,7 @@ const statusCodeToLabel: Record<string, TransactionStatus> = {
 };
 
 interface Props {
-  onSubmit: (input: DisputeInput) => void;
+  onSubmit: (input: FormSubmitData) => void;
   prefill?: DisputeInput | null;
 }
 
@@ -113,6 +114,7 @@ export default function DisputeForm({ onSubmit, prefill }: Props) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     onSubmit({
+      customerName: form.customerName,
       transactionId: form.transactionId,
       paymentType: form.paymentType as PaymentType,
       issueCategory: form.issueCategory as IssueCategory,
