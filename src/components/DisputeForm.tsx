@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { DisputeInput, PaymentType, IssueCategory, TransactionStatus } from '../engine/types';
+import { lookupTransaction } from '../data/mockTransactions';
 
 const paymentTypes: PaymentType[] = ['Card Payment', 'EFT', 'Internal Transfer'];
 const issueCategories: IssueCategory[] = [
@@ -59,6 +60,7 @@ export default function DisputeForm({ onSubmit, prefill }: Props) {
     const ref = form.transactionId.trim();
     if (!ref) return;
 
+    // Try API first
     try {
       const res = await fetch(`/api/transactions/${encodeURIComponent(ref)}`);
       if (res.ok) {
@@ -74,13 +76,26 @@ export default function DisputeForm({ onSubmit, prefill }: Props) {
         }));
         setLookupStatus('found');
         setStatusFromLookup(true);
-      } else {
-        setLookupStatus('not-found');
-        setStatusFromLookup(false);
+        return;
       }
     } catch {
-      // API not available (client-only mode) — allow manual entry
-      setLookupStatus('idle');
+      // API not available — fall through to local lookup
+    }
+
+    // Fallback: check local mock dataset
+    const localTxn = lookupTransaction(ref);
+    if (localTxn) {
+      setForm((prev) => ({
+        ...prev,
+        transactionStatus: localTxn.transactionStatus,
+        amount: String(localTxn.amount),
+        disputeDate: localTxn.disputeDate,
+        paymentType: localTxn.paymentType,
+      }));
+      setLookupStatus('found');
+      setStatusFromLookup(true);
+    } else {
+      setLookupStatus('not-found');
       setStatusFromLookup(false);
     }
   }, [form.transactionId]);

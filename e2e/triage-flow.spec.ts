@@ -68,6 +68,19 @@ test.describe('Payment Dispute Triage — E2E', () => {
     await expect(page.getByText('Refer to Another Team', { exact: true })).toBeVisible();
   });
 
+  test('TC-036: pre-populate transaction status for valid reference', async ({ page }) => {
+    // Type a valid mock reference and blur the field
+    await page.locator('#transactionId').fill('TXN-001');
+    await page.locator('#transactionId').blur();
+
+    // Wait for the lookup feedback
+    await expect(page.getByText('Transaction found')).toBeVisible();
+    // Status should be pre-populated (TXN-001 is Completed in mock data)
+    await expect(page.locator('#transactionStatus')).toHaveValue('Completed');
+    // Should show "(from lookup)" indicator
+    await expect(page.getByText('(from lookup)')).toBeVisible();
+  });
+
   test('TC-012: rejects future transaction date with error message', async ({ page }) => {
     await page.locator('#transactionId').fill('TXN-FUTURE');
     await page.locator('#paymentType').selectOption('Card Payment');
