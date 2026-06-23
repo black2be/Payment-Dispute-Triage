@@ -58,23 +58,33 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <header className="mb-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Payment Dispute Triage
-        </h1>
-        <p className="text-gray-600">Capture a dispute and get a recommendation</p>
+    <div className="min-h-screen bg-sb-gray-50 font-sans">
+      {/* Header bar */}
+      <header className="bg-sb-blue shadow-md">
+        <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-sb-gold rounded-sm flex items-center justify-center">
+              <span className="text-white font-bold text-sm">SB</span>
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-white leading-tight">Payment Dispute Triage</h1>
+              <p className="text-xs text-blue-200">Digital Platforms — Operations Tool</p>
+            </div>
+          </div>
+          <span className="text-xs text-blue-200">Prototype v1.0</span>
+        </div>
       </header>
 
-      <main className="mx-auto max-w-4xl space-y-6">
-        <div className="rounded bg-white p-4 shadow">
-          <label htmlFor="txn-select" className="block text-sm font-medium text-gray-700 mb-1">
+      <main className="mx-auto max-w-5xl px-6 py-8 space-y-6">
+        {/* Mock data selector */}
+        <div className="rounded-lg border border-sb-gray-200 bg-white p-4 shadow-sm">
+          <label htmlFor="txn-select" className="block text-sm font-medium text-sb-gray-700 mb-1">
             Load from mock data
           </label>
           <select
             id="txn-select"
             onChange={handleSelectTransaction}
-            className="block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            className="block w-full rounded-md border-sb-gray-200 bg-sb-gray-50 px-3 py-2 text-sm shadow-sm focus:border-sb-blue focus:ring-sb-blue"
             defaultValue=""
           >
             <option value="">Select a mock transaction…</option>
@@ -86,9 +96,11 @@ export default function App() {
           </select>
         </div>
 
+        {/* Validation errors */}
         {errors.length > 0 && (
-          <div role="alert" className="rounded bg-red-50 p-4 text-red-800">
-            <ul className="list-disc pl-4">
+          <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">
+            <p className="font-medium text-sm mb-1">Please correct the following:</p>
+            <ul className="list-disc pl-5 text-sm">
               {errors.map((e, i) => (
                 <li key={i}>{e}</li>
               ))}
@@ -96,9 +108,10 @@ export default function App() {
           </div>
         )}
 
+        {/* Form */}
         <DisputeForm key={resetKey} onSubmit={handleSubmit} prefill={prefill} fieldErrors={errors} />
 
-        {/* Result panel with aria-live for screen readers */}
+        {/* Result panel */}
         <div aria-live="polite" aria-atomic="true">
           {result && formData ? (
             <>
@@ -106,23 +119,31 @@ export default function App() {
               <div className="mt-6">
                 <RecommendationPanel result={result} />
               </div>
-              <div className="mt-4 text-center">
+              <div className="mt-6 text-center">
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="rounded-md border border-sb-gray-200 bg-white px-5 py-2 text-sm font-medium text-sb-gray-700 shadow-sm hover:bg-sb-gray-50 focus:outline-none focus:ring-2 focus:ring-sb-blue"
                 >
                   New dispute
                 </button>
               </div>
             </>
           ) : (
-            <div className="rounded bg-white p-6 shadow text-center text-gray-500">
-              Capture a dispute to see the recommended next step.
+            <div className="rounded-lg border border-sb-gray-200 bg-white p-8 shadow-sm text-center">
+              <p className="text-sb-gray-500">Capture a dispute to see the recommended next step.</p>
             </div>
           )}
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="mt-12 border-t border-sb-gray-200 bg-white">
+        <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between text-xs text-sb-gray-500">
+          <span>© 2026 Standard Bank Group. Internal use only.</span>
+          <span>AI SDLC — Digital Platforms</span>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -6,25 +6,37 @@ interface Props {
 
 export default function RecommendationPanel({ result }: Props) {
   return (
-    <div className="rounded bg-white p-6 shadow">
-      <h2 className="mb-4 text-lg font-semibold">Rule Evaluations</h2>
-      <p className="mb-2 text-sm text-gray-500">
-        Triggered: <strong>{result.triggeredRuleId}</strong>
+    <div className="rounded-lg border border-sb-gray-200 bg-white p-6 shadow-sm">
+      <h2 className="mb-4 text-lg font-semibold text-sb-blue">Rule Evaluations</h2>
+      <p className="mb-3 text-sm text-sb-gray-500">
+        Triggered: <strong className="text-sb-blue">{result.triggeredRuleId}</strong>
       </p>
       <ul className="space-y-2">
         {result.ruleEvaluations.map((ev) => (
           <li
             key={ev.ruleId}
-            className={`rounded border p-3 ${ev.matched ? 'border-green-300 bg-green-50' : 'border-gray-200'}`}
+            className={`rounded-md border p-3 ${
+              ev.matched
+                ? ev.ruleId === result.triggeredRuleId
+                  ? 'border-sb-blue bg-sb-blue-light'
+                  : 'border-green-200 bg-green-50'
+                : 'border-sb-gray-200 bg-sb-gray-50'
+            }`}
           >
             <div className="flex items-center justify-between">
-              <span className="font-mono text-sm">{ev.ruleId}</span>
-              <span className={`text-xs font-medium ${ev.matched ? 'text-green-700' : 'text-gray-400'}`}>
-                {ev.matched ? 'MATCHED' : 'not matched'}
+              <span className="font-mono text-xs text-sb-gray-700">{ev.ruleId}</span>
+              <span className={`text-xs font-medium ${
+                ev.matched
+                  ? ev.ruleId === result.triggeredRuleId
+                    ? 'text-sb-blue'
+                    : 'text-green-700'
+                  : 'text-sb-gray-500'
+              }`}>
+                {ev.ruleId === result.triggeredRuleId ? '✓ TRIGGERED' : ev.matched ? '✓ matched' : '– not matched'}
               </span>
             </div>
-            <p className="text-sm text-gray-600">{ev.label}</p>
-            {ev.reason && <p className="mt-1 text-sm italic text-gray-700">{ev.reason}</p>}
+            <p className="text-sm text-sb-gray-700">{ev.label}</p>
+            {ev.reason && <p className="mt-1 text-sm italic text-sb-gray-500">{ev.reason}</p>}
           </li>
         ))}
       </ul>

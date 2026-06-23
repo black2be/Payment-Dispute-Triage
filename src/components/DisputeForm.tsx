@@ -125,17 +125,17 @@ export default function DisputeForm({ onSubmit, prefill, fieldErrors = [] }: Pro
     });
   }
 
-  const labelClass = 'block text-sm font-medium text-gray-700';
-  const inputClass = 'mt-1 block w-full rounded border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500';
-  const errorInputClass = 'mt-1 block w-full rounded border-red-500 shadow-sm focus:border-red-500 focus:ring-red-500';
+  const labelClass = 'block text-sm font-medium text-sb-gray-700';
+  const inputClass = 'mt-1 block w-full rounded-md border-sb-gray-200 bg-sb-gray-50 px-3 py-2 text-sm shadow-sm focus:border-sb-blue focus:ring-sb-blue';
+  const errorInputClass = 'mt-1 block w-full rounded-md border-red-400 bg-red-50 px-3 py-2 text-sm shadow-sm focus:border-red-500 focus:ring-red-500';
 
   function hasError(field: string) {
     return fieldErrors.some((e) => e.toLowerCase().includes(field.toLowerCase()));
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded bg-white p-6 shadow">
-      <h2 className="mb-4 text-lg font-semibold">Capture dispute</h2>
+    <form onSubmit={handleSubmit} className="rounded-lg border border-sb-gray-200 bg-white p-6 shadow-sm">
+      <h2 className="mb-4 text-lg font-semibold text-sb-blue">Capture dispute</h2>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="customerName" className={labelClass}>Customer Name</label>
@@ -209,7 +209,7 @@ export default function DisputeForm({ onSubmit, prefill, fieldErrors = [] }: Pro
           <textarea id="description" name="description" value={form.description} onChange={handleChange} className={inputClass} rows={2} placeholder="Additional details…" />
         </div>
       </div>
-      <button type="submit" className="mt-6 rounded bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <button type="submit" className="mt-6 rounded-md bg-sb-blue px-6 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-sb-blue-dark focus:outline-none focus:ring-2 focus:ring-sb-blue focus:ring-offset-2">
         Triage Dispute
       </button>
     </form>
