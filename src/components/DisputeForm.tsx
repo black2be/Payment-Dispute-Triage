@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { DisputeInput, PaymentType, IssueCategory, TransactionStatus } from '../engine/types';
 
 const paymentTypes: PaymentType[] = ['Card Payment', 'EFT', 'Internal Transfer'];
@@ -9,6 +9,14 @@ const issueCategories: IssueCategory[] = [
   'Unauthorized Transaction',
 ];
 const statuses: TransactionStatus[] = ['Completed', 'Pending', 'Failed', 'Reversed'];
+
+// Code → label map for transaction status (design §2.1)
+const statusCodeToLabel: Record<string, TransactionStatus> = {
+  COMPLETED: 'Completed',
+  PENDING: 'Pending',
+  FAILED: 'Failed',
+  REVERSED: 'Reversed',
+};
 
 interface Props {
   onSubmit: (input: DisputeInput) => void;
@@ -26,6 +34,8 @@ export default function DisputeForm({ onSubmit, prefill }: Props) {
     disputeDate: '',
     description: '',
   });
+  const [lookupStatus, setLookupStatus] = useState<'idle' | 'found' | 'not-found'>('idle');
+  const [statusFromLookup, setStatusFromLookup] = useState(false);
 
   useEffect(() => {
     if (prefill) {
@@ -39,11 +49,50 @@ export default function DisputeForm({ onSubmit, prefill }: Props) {
         disputeDate: prefill.disputeDate,
         description: '',
       });
+      setLookupStatus('idle');
+      setStatusFromLookup(false);
     }
   }, [prefill]);
 
+  // REQ-06.1/06.2: Look up transaction reference on blur
+  const handleReferenceLookup = useCallback(async () => {
+    const ref = form.transactionId.trim();
+    if (!ref) return;
+
+    try {
+      const res = await fetch(`/api/transactions/${encodeURIComponent(ref)}`);
+      if (res.ok) {
+        const txn = await res.json();
+        const label = statusCodeToLabel[txn.status] || '';
+        setForm((prev) => ({
+          ...prev,
+          transactionStatus: label as TransactionStatus,
+          amount: txn.amount ? String(txn.amount) : prev.amount,
+          disputeDate: txn.transactionDate
+            ? new Date(txn.transactionDate).toISOString().split('T')[0]!
+            : prev.disputeDate,
+        }));
+        setLookupStatus('found');
+        setStatusFromLookup(true);
+      } else {
+        setLookupStatus('not-found');
+        setStatusFromLookup(false);
+      }
+    } catch {
+      // API not available (client-only mode) — allow manual entry
+      setLookupStatus('idle');
+      setStatusFromLookup(false);
+    }
+  }, [form.transactionId]);
+
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    // Reset lookup state if reference changes
+    if (name === 'transactionId') {
+      setLookupStatus('idle');
+      setStatusFromLookup(false);
+    }
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -71,7 +120,21 @@ export default function DisputeForm({ onSubmit, prefill }: Props) {
         </div>
         <div>
           <label htmlFor="transactionId" className={labelClass}>Transaction Reference</label>
-          <input id="transactionId" name="transactionId" value={form.transactionId} onChange={handleChange} className={inputClass} />
+          <input
+            id="transactionId"
+            name="transactionId"
+            value={form.transactionId}
+            onChange={handleChange}
+            onBlur={handleReferenceLookup}
+            className={inputClass}
+            placeholder="e.g. TXN-001"
+          />
+          {lookupStatus === 'found' && (
+            <p className="mt-1 text-xs text-green-600">Transaction found — status pre-populated.</p>
+          )}
+          {lookupStatus === 'not-found' && (
+            <p className="mt-1 text-xs text-amber-600">Reference not found — enter status manually.</p>
+          )}
         </div>
         <div>
           <label htmlFor="paymentType" className={labelClass}>Payment Type</label>
@@ -88,7 +151,10 @@ export default function DisputeForm({ onSubmit, prefill }: Props) {
           </select>
         </div>
         <div>
-          <label htmlFor="transactionStatus" className={labelClass}>Transaction Status</label>
+          <label htmlFor="transactionStatus" className={labelClass}>
+            Transaction Status
+            {statusFromLookup && <span className="ml-2 text-xs text-green-600">(from lookup)</span>}
+          </label>
           <select id="transactionStatus" name="transactionStatus" value={form.transactionStatus} onChange={handleChange} className={inputClass}>
             <option value="">Select…</option>
             {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
