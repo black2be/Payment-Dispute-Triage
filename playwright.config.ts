@@ -7,7 +7,9 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:4173',
     headless: true,
-    screenshot: 'only-on-failure',
+    screenshot: 'on',
+    video: 'on',
+    trace: 'on',
   },
   projects: [
     { name: 'chromium', use: { browserName: 'chromium' } },
