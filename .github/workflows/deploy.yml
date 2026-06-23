@@ -27,5 +27,7 @@ jobs:
             else
               git clone https://github.com/black2be/Payment-Dispute-Triage.git .
             fi
+            docker stop payment-triage 2>/dev/null || true
+            docker rm payment-triage 2>/dev/null || true
             docker compose down || true
             docker compose up -d --build
