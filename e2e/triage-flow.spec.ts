@@ -31,12 +31,12 @@ test.describe('Payment Dispute Triage — E2E', () => {
     await expect(page.getByText('R3-UNAUTH').first()).toBeVisible();
   });
 
-  test('triaging a low-value duplicate shows Resolve Immediately', async ({ page }) => {
+  test('triaging a low-value duplicate shows Investigate Further', async ({ page }) => {
     await page.getByLabel('Load from mock data').selectOption('TXN-003');
     await page.getByRole('button', { name: 'Triage Dispute' }).click();
 
-    await expect(page.getByText('Resolve Immediately', { exact: true })).toBeVisible();
-    await expect(page.getByText('R2-LOW-DUP-COMPLETE').first()).toBeVisible();
+    await expect(page.getByText('Investigate Further', { exact: true })).toBeVisible();
+    await expect(page.getByText('R2-DUP-COMPLETED').first()).toBeVisible();
   });
 
   test('triaging a recent failed transaction shows Resolve Immediately', async ({ page }) => {
@@ -57,11 +57,11 @@ test.describe('Payment Dispute Triage — E2E', () => {
 
   test('manual form entry works end-to-end', async ({ page }) => {
     await page.locator('#transactionId').fill('TXN-MANUAL');
-    await page.locator('#paymentType').selectOption('EFT');
-    await page.locator('#issueCategory').selectOption('Missing Payment');
-    await page.locator('#transactionStatus').selectOption('Pending');
-    await page.locator('#amount').fill('800');
-    await page.locator('#disputeDate').fill('2026-06-20');
+    await page.locator('#paymentType').selectOption('Internal Transfer');
+    await page.locator('#issueCategory').selectOption('Failed Transfer');
+    await page.locator('#transactionStatus').selectOption('Completed');
+    await page.locator('#amount').fill('5000');
+    await page.locator('#disputeDate').fill('2026-06-08');
 
     await page.getByRole('button', { name: 'Triage Dispute' }).click();
 
