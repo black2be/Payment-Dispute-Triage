@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:report": "vitest run --reporter=html --outputFile=test-report/index.html",
     "test:e2e": "playwright test",
+    "test:e2e:report": "playwright test --reporter=html",
     "lint": "eslint . --ext .ts,.tsx"
   },
   "dependencies": {
