@@ -24,9 +24,10 @@ interface Props {
   onSubmit: (input: FormSubmitData) => void;
   prefill?: DisputeInput | null;
   fieldErrors?: string[];
+  isEditing?: boolean;
 }
 
-export default function DisputeForm({ onSubmit, prefill, fieldErrors = [] }: Props) {
+export default function DisputeForm({ onSubmit, prefill, fieldErrors = [], isEditing = false }: Props) {
   const [form, setForm] = useState({
     transactionId: '',
     customerName: '',
@@ -44,7 +45,7 @@ export default function DisputeForm({ onSubmit, prefill, fieldErrors = [] }: Pro
     if (prefill) {
       setForm({
         transactionId: prefill.transactionId,
-        customerName: '',
+        customerName: 'customerName' in prefill ? (prefill as FormSubmitData).customerName : '',
         paymentType: prefill.paymentType,
         issueCategory: prefill.issueCategory,
         transactionStatus: prefill.transactionStatus,
@@ -210,7 +211,7 @@ export default function DisputeForm({ onSubmit, prefill, fieldErrors = [] }: Pro
         </div>
       </div>
       <button type="submit" className="mt-6 rounded-md bg-sb-blue px-6 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-sb-blue-dark focus:outline-none focus:ring-2 focus:ring-sb-blue focus:ring-offset-2">
-        Triage Dispute
+        {isEditing ? 'Save Changes' : 'Triage Dispute'}
       </button>
     </form>
   );

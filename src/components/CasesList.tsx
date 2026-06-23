@@ -32,9 +32,10 @@ const priorityColors: Record<string, string> = {
 interface Props {
   cases: CaseRecord[];
   onUpdateStatus: (id: string, status: CaseRecord['status']) => void;
+  onEdit: (id: string) => void;
 }
 
-export default function CasesList({ cases, onUpdateStatus }: Props) {
+export default function CasesList({ cases, onUpdateStatus, onEdit }: Props) {
   if (cases.length === 0) {
     return (
       <div className="rounded-lg border border-sb-gray-200 bg-white p-8 shadow-sm text-center">
@@ -56,7 +57,7 @@ export default function CasesList({ cases, onUpdateStatus }: Props) {
               <th className="px-4 py-3 font-medium">Priority</th>
               <th className="px-4 py-3 font-medium">Action</th>
               <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Update</th>
+              <th className="px-4 py-3 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-sb-gray-200">
@@ -82,16 +83,24 @@ export default function CasesList({ cases, onUpdateStatus }: Props) {
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <select
-                    value={c.status}
-                    onChange={(e) => onUpdateStatus(c.id, e.target.value as CaseRecord['status'])}
-                    className="rounded border-sb-gray-200 bg-sb-gray-50 px-2 py-1 text-xs focus:border-sb-blue focus:ring-sb-blue"
-                  >
-                    <option value="Open">Open</option>
-                    <option value="In Review">In Review</option>
-                    <option value="Resolved">Resolved</option>
-                    <option value="Closed">Closed</option>
-                  </select>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={c.status}
+                      onChange={(e) => onUpdateStatus(c.id, e.target.value as CaseRecord['status'])}
+                      className="rounded border-sb-gray-200 bg-sb-gray-50 px-2 py-1 text-xs focus:border-sb-blue focus:ring-sb-blue"
+                    >
+                      <option value="Open">Open</option>
+                      <option value="In Review">In Review</option>
+                      <option value="Resolved">Resolved</option>
+                      <option value="Closed">Closed</option>
+                    </select>
+                    <button
+                      onClick={() => onEdit(c.id)}
+                      className="rounded border border-sb-gray-200 px-2 py-1 text-xs font-medium text-sb-blue hover:bg-sb-blue-light focus:outline-none focus:ring-1 focus:ring-sb-blue"
+                    >
+                      Edit
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

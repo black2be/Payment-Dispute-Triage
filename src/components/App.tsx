@@ -24,6 +24,7 @@ export default function App() {
   const [resetKey, setResetKey] = useState(0);
   const [cases, setCases] = useState<CaseRecord[]>(() => generateMockCases());
   const [actionTaken, setActionTaken] = useState<string | null>(null);
+  const [editingCaseId, setEditingCaseId] = useState<string | null>(null);
 
   function handleSubmit(input: FormSubmitData) {
     const validationErrors = validate(input);
@@ -40,15 +41,27 @@ export default function App() {
     setResult(triageResult);
     setFormData(input);
 
-    // Add to cases list
-    const newCase: CaseRecord = {
-      id: `CASE-${String(cases.length + 1).padStart(3, '0')}`,
-      formData: input,
-      result: triageResult,
-      status: 'Open',
-      createdAt: new Date().toISOString(),
-    };
-    setCases((prev) => [newCase, ...prev]);
+    if (editingCaseId) {
+      // Update existing case
+      setCases((prev) =>
+        prev.map((c) =>
+          c.id === editingCaseId
+            ? { ...c, formData: input, result: triageResult }
+            : c
+        )
+      );
+      setEditingCaseId(null);
+    } else {
+      // Add new case
+      const newCase: CaseRecord = {
+        id: `CASE-${String(cases.length + 1).padStart(3, '0')}`,
+        formData: input,
+        result: triageResult,
+        status: 'Open',
+        createdAt: new Date().toISOString(),
+      };
+      setCases((prev) => [newCase, ...prev]);
+    }
   }
 
   function handleSelectTransaction(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -75,6 +88,20 @@ export default function App() {
     setErrors([]);
     setPrefill(null);
     setActionTaken(null);
+    setEditingCaseId(null);
+    setResetKey((k) => k + 1);
+  }
+
+  function handleEdit(id: string) {
+    const caseToEdit = cases.find((c) => c.id === id);
+    if (!caseToEdit) return;
+    setEditingCaseId(id);
+    setPrefill(caseToEdit.formData);
+    setResult(null);
+    setFormData(null);
+    setErrors([]);
+    setActionTaken(null);
+    setView('capture');
     setResetKey((k) => k + 1);
   }
 
@@ -168,7 +195,13 @@ export default function App() {
             )}
 
             {/* Form */}
-            <DisputeForm key={resetKey} onSubmit={handleSubmit} prefill={prefill} fieldErrors={errors} />
+            {editingCaseId && (
+              <div className="rounded-lg border border-sb-blue bg-sb-blue-light p-3 flex items-center justify-between">
+                <p className="text-sm font-medium text-sb-blue">Editing case {editingCaseId}</p>
+                <button onClick={handleReset} className="text-xs text-sb-blue underline">Cancel</button>
+              </div>
+            )}
+            <DisputeForm key={resetKey} onSubmit={handleSubmit} prefill={prefill} fieldErrors={errors} isEditing={!!editingCaseId} />
 
             {/* Result */}
             <div aria-live="polite" aria-atomic="true">
@@ -212,7 +245,7 @@ export default function App() {
                 New dispute
               </button>
             </div>
-            <CasesList cases={cases} onUpdateStatus={handleUpdateCaseStatus} />
+            <CasesList cases={cases} onUpdateStatus={handleUpdateCaseStatus} onEdit={handleEdit} />
           </>
         )}
       </main>
