@@ -8,8 +8,9 @@ node_modules/
 # Build output
 dist/
 build/
+tsconfig.tsbuildinfo
 
-# Prisma / SQLite (local DB + generated client)
+# Prisma / SQLite
 *.db
 *.db-journal
 server/prisma/dev.db*
@@ -26,3 +27,10 @@ server/prisma/dev.db*
 coverage/
 playwright-report/
 test-results/
+test-report/
+
+# IDE
+.vscode/
+
+# Office temp files
+~$*
