@@ -1,0 +1,22 @@
+name: Remove App from EC2
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    environment: Payment
+    steps:
+      - name: Remove payment-triage container and files
+        uses: appleboy/ssh-action@v1
+        with:
+          host: 52.19.75.103
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker stop payment-triage 2>/dev/null || true
+            docker rm payment-triage 2>/dev/null || true
+            cd /opt/payment-triage 2>/dev/null && docker compose down --rmi all 2>/dev/null || true
+            sudo rm -rf /opt/payment-triage
+            echo "payment-triage removed successfully"
